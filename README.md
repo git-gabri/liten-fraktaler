@@ -6,7 +6,8 @@ A fractal rendering software, written in C++, inspired by a much more popular pr
 * `cd` into the repository
 * `g++ -o liten_fraktaler main.cpp -Wall -O2 -lpthread -lpng`
 
-You should now have an executable called `liten-fraktaler`
+You should now have an executable called `liten-fraktaler`.  
+A compiled (with `gcc 7.5.0`) executable for `x86-64` is also provided in the `bin` folder.
 
 ## Usage
 This help is also available by launching the program with the `-H` flag, like this `./liten-fraktaler -H`.
