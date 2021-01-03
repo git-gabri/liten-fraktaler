@@ -4,7 +4,7 @@ A fractal rendering software, written in C++, inspired by a much more popular pr
 ## Compiling on Linux with `gcc`
 * Clone this repository
 * `cd` into the repository
-* `g++ -o liten_fraktaler main.cpp -Wall -O2 -lpthread -lpng`
+* `g++ -o liten-fraktaler main.cpp -Wall -O2 -lpthread -lpng`
 
 You should now have an executable called `liten-fraktaler`.  
 A compiled (with `gcc 7.5.0`) executable for `x86-64` is also provided in the `bin` folder.
