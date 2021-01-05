@@ -224,8 +224,11 @@ COLOR RELATED FLAGS
                 "0 0 0" represents black and "255 255 0" is yellow.
                 In general,
                 the format for a single line is "uint8_t uint8_t uint8_t".
-                By default, or if an error is found in the config file, the palette
-                is loaded with just black and white.
+                By default, the program looks for a file named "palette" (note that the
+                name has no extension. If you want to load "palette.txt" you will have
+                to specify it) and if the palette file is not found or an error occurs
+                while trying to load the colors, the palette is loaded with only black
+                and white.
 
     -c INT      sets coloring mode. Must be a number in [0, 4].
                 The supported coloring modes are:

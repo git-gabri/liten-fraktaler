@@ -4,7 +4,7 @@ A fractal rendering software, written in C++, inspired by a much more popular pr
 ## Compiling on Linux with `gcc`
 * Clone this repository
 * `cd` into the repository
-* `g++ -o liten-fraktaler main.cpp -Wall -O2 -lpthread -lpng`
+* `g++ -o liten_fraktaler main.cpp -Wall -O2 -lpthread -lpng`
 
 You should now have an executable called `liten-fraktaler`.  
 A compiled (with `gcc 7.5.0`) executable for `x86-64` is also provided in the `bin` folder.
@@ -44,12 +44,12 @@ Options:
 * **Coloring related flags**
 	* `-p STRING` sets filename of input config file for color palette to the content of `STRING`.  
 		When this flag is used, the program looks in the folder into which the executable is placed, for
-        a file whose name is the content of `STRING`. It must be a simple `.txt` file.  
+        a file whose name is the content of `STRING`. It must be a simple plain text file.  
         Each line in this file represents a color that is then loaded in the color palette. The colors must be specified 		 by writing their individual `R`(ed), `G`(reen) and `B`(lue) channel values separated by a space.  
         For example, a line containing `255 255 255` represents white, `0 0 0` represents black and `255 255 0` is
         yellow.  
         In general, the format for a single line is `uint8_t uint8_t uint8_t`.  
-        By default, or if an error is found in the config file, the palette is loaded with just black and white.
+        By default, the program looks for a file named `palette` (note that the name has no extension. If you want to 			load `palette.txt` you will have to specify it) and if the palette file is not found or an error occurs while 			trying to load the colors, the palette is loaded with only black and white.
     * `-c INT` sets coloring mode. Must be a number in [0, 4]. The default is 3, because it's the best looking one.  
     	The supported coloring modes are:
     	* `0` - binary (black or white)  
