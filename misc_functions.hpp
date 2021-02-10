@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <png++/png.hpp>
 
+#define VERSION "0.7.11"
 #define CONST_PI 3.141592653589793238l
 
 using namespace std;
@@ -18,23 +19,24 @@ using namespace std;
 //Coloring mode
 /*Supported coloring modes
 * 0  -> binary (black or white)
-* 1  -> ln
-* 2  -> square root of iteration
-* 3  -> cubic root of iteration
-* 4  -> angle of the last iterated point (calculated through arctan)
+* 1  -> linear
+* 2  -> ln
+* 3  -> square root of iteration
+* 4  -> cubic root of iteration
+* 5  -> s curve, made with x^3 from 0 to 1 and (x-2)^3 + 2 from 1 to 2
+* 6  -> angle of the last iterated point (calculated through arctan)
 
 TODO
 * FIX LN
-* 5  -> bailout / norm of last iter
-* 6  -> imaginary part of the last iterated point (normalized to idk what)
-* 7  -> real + imag (normalized to idk what)
-* 8  -> real * imag (normalized to idk what)
-* 9  -> linear
-* Y  -> ln(ln()) but make it option number 2 and shift all the others
+* N  -> bailout / norm of last iter
+* N  -> imaginary part of the last iterated point (normalized to idk what)
+* N  -> real + imag (normalized to idk what)
+* N  -> real * imag (normalized to idk what)
+* N  -> ln(ln()) but make it option number 2 and shift all the others
 */
 png::rgb_pixel compute_color(
-    const int iter, const int max_iter, const long double last_re, const long double last_im, const long double bailout,
-    const int color_mode, const vector<png::rgb_pixel>& palette){
+    const int iter, const int max_iter, const long double last_re, const long double last_im,
+    const long double bailout, const int color_mode, const vector<png::rgb_pixel>& palette){
 
     if(iter > max_iter || iter < 0 || max_iter < 0) return png::rgb_pixel(0, 0, 0);
 
@@ -58,33 +60,47 @@ png::rgb_pixel compute_color(
 
     //Switching color modes
     switch(color_mode){
-        case 1:         //SMOOTH / LOG
+        case 1:         //LINEAR
+            calculated_index = (normalized_iter) * (palette.size() - 1);
+            color_index = floor(calculated_index);
+            round_error = calculated_index - color_index;
+            interpolation_index = ceil(calculated_index);
+            break;
+
+        case 2:         //SMOOTH / LOG
         {
             if(iter == max_iter) return png::rgb_pixel(0, 0, 0);
             const long double smooth_iter = (long double)iter - log(log(last_re * last_re + last_im * last_im)/(2.0l * log(bailout))) / log(2.0l);
             if(smooth_iter < 0.0l) return palette.front();
-            calculated_index = fmod(smooth_iter, (palette.size() - 1));
+            calculated_index = fmod(smooth_iter, palette.size());
             color_index = floor(calculated_index);
             round_error = calculated_index - color_index;
-            interpolation_index = ceil(calculated_index);
+            interpolation_index = (size_t)ceil(calculated_index) % palette.size();
         }
             break;
 
-        case 2:         //SQRT
+        case 3:         //SQRT
             calculated_index = sqrt(normalized_iter) * (palette.size() - 1);
             color_index = floor(calculated_index);
             round_error = calculated_index - color_index;
             interpolation_index = ceil(calculated_index);
             break;
 
-        case 3:         //CBRT
+        case 4:         //CBRT
             calculated_index = cbrt(normalized_iter) * (palette.size() - 1);
             color_index = floor(calculated_index);
             round_error = calculated_index - color_index;
             interpolation_index = ceil(calculated_index);
             break;
 
-        case 4:         //ANGLE
+        case 5:         //S CURVE
+            calculated_index = ((normalized_iter >= 0.5 ? powl((normalized_iter*2 - 2), 3) + 2 : powl(normalized_iter*2, 3)) / 2) * (palette.size() - 1);
+            color_index = floor(calculated_index);
+            round_error = calculated_index - color_index;
+            interpolation_index = ceil(calculated_index);
+            break;
+
+        case 6:         //ANGLE
             calculated_index = atan2(last_im, last_re);     //Return range [-pi, +pi]
             calculated_index = calculated_index/(2.0l * CONST_PI) + 0.5l;
             color_index = floor(calculated_index);
@@ -155,7 +171,7 @@ int load_palette(vector<png::rgb_pixel>& palette, string file_name){
 ///Function that prints info about the program and its usage
 //Print help of the program, usage and flags
 void printHelp(char *argv[]){
-    cout << "Fractal generator by git-gabri, v0.7" << endl;
+    cout << "Fractal generator by git-gabri, v" << VERSION << endl;
     cout << "Usage: " << argv[0] << " [OPTIONS]" << endl;
     cout << R"foo(
 The name of this program was inspired by a much more popular fractal rendering
@@ -179,11 +195,18 @@ IMAGE RELATED FLAGS
                 The default name is "fractal.png"
 
 FRACTAL RELATED FLAGS
-    -f INT      sets fractal type. Must be a number in [0, 3].
-                0 -> Mandelbrot set
-                1 -> Burning ship
-                2 -> Mandelbar
-                3 -> Spade fractal (z^z + c)
+    -f INT      sets fractal type. The default is 0.
+                 0 -> Mandelbrot set
+                 1 -> Tippets Mandelbrot (M. set implementation with intentional bug)
+                 2 -> Burning ship
+                 3 -> Mandelbar
+                 4 -> Spade fractal (z^z + c)
+                 5 -> Magnet type I
+                 6 -> Magnet type II
+                 7 -> Cactus (z^3 + (c-1)*z - c)
+                 8 -> Zubieta (z^2 + c/z, fancy Julia sets)
+                 9 -> Zubitheta (z^2 + z/c)
+                10 -> Logistic map (c*z*(1-z))
                 The default is 0
 
     -r LNG_DBL  sets real part of the offset from the origin
@@ -206,10 +229,13 @@ FRACTAL RELATED FLAGS
 
     -t INT      sets maximum number of iterations. The default is 2000
 
-    -b LNG_DBL  sets bailout radius for the fractal. The default is 2
+    -b LNG_DBL  sets bailout radius for the fractal.
+                The default varies from fractal to fractal
 
     -T INT      sets maximum number of threads working on the rendering of the image.
-                The default is 8
+                By default, the program tries to automatically detect the number of
+                available threads on the host machine and uses all of them. If this
+                detection fails, the maximum number of threads is set to 4.
 
 COLOR RELATED FLAGS
     -p STRING   sets filename of input config file for color palette to STRING.
@@ -230,15 +256,17 @@ COLOR RELATED FLAGS
                 while trying to load the colors, the palette is loaded with only black
                 and white.
 
-    -c INT      sets coloring mode. Must be a number in [0, 4].
+    -c INT      sets coloring mode.
                 The supported coloring modes are:
                 0  -> binary (black or white)
-                1  -> ln (which is the most popular option but I'm really struggling in
+                1  -> linear
+                2  -> ln (which is the most popular option but I'm really struggling in
                           implementing it properly. It doesn't look that great)
-                2  -> square root of iteration
-                3  -> cubic root of iteration
-                4  -> angle of the last iterated point (calculated through arctan)
-                The default is 3, because it's the best looking one.
+                3  -> square root of iteration
+                4  -> cubic root of iteration
+                5  -> s curve
+                6  -> angle of the last iterated point (calculated through arctan)
+                The default is 4, because it's the best looking one.
 
 OTHER FLAGS
     -v          print verbose output, more user friendly

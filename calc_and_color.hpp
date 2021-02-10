@@ -5,56 +5,48 @@
 #include <vector>
 #include <array>
 #include <string>
-#include <thread>
-#include <atomic>
 #include <functional>
 #include <png++/png.hpp>
-#include <unistd.h>                         //for usleep
+
+#include <ThreadPool.h>
+#include <future>
+
+#include <structs.h>
 #include "fractals.hpp"
 
 #define vcout if(verboseOutput) cout        //print only if verbose output enabled (verbose-cout)
 
 using namespace std;
 
-atomic<int> runningThreads(0);
 extern int maxThreads;
 
-///Prototypes
-void printInfo( const size_t imageWidth, const size_t imageHeight, const size_t maxSectorSide,
-                const int fractal_type, const long double offset_re, const long double offset_im,
-                const bool juliaMode, const long double julia_re, const long double julia_im,
-                const long double scalingFactor, const int max_iter, const long double bailout,
-                const int colorMode);
+//printinfo prototype
+void printInfo(const imagesettings_t isettings, const fractalsettings_t fsettings, const colorsettings_t csettings);
 
 ///Functions
 //main function to compute the entire fractal image
-png::image<png::rgb_pixel> calc_and_color(
-    const size_t imageWidth, const size_t imageHeight, const size_t maxSectorSide,                                          //image data
-    const int fractal_type, const long double offset_re, const long double offset_im,                                       //fractal type, offset position
-    const bool juliaMode, const long double julia_re, const long double julia_im,                                           //Julia mode, julia offset position
-    const long double scalingFactor, const int max_iter, const long double bailout,                                         //zoom, iterations, bailout radius
-    const int colorMode, const vector<png::rgb_pixel> palette, const bool verboseOutput){                                   //coloring mode, palette, user friendly console output
+png::image<png::rgb_pixel> calc_and_color(imagesettings_t isettings, fractalsettings_t fsettings, colorsettings_t csettings,
+                                          const vector<png::rgb_pixel> palette, const bool verboseOutput){
 
     //To better distribute the workload between all the threads, the image gets divided into sectors, then
     //when one thread working on a sector finishes, we launch another one to work on another sector, so that we
     //(almost) always have maxThreads working on a sector
     vector<array<size_t, 4>> sectors = {};
     //Image of the fractal
-    png::image<png::rgb_pixel> fractal_image(imageWidth, imageHeight);
+    png::image<png::rgb_pixel> fractal_image(isettings.imageWidth, isettings.imageHeight);
 
     //Creating sectors onto which thread can work in parallel
-    for(size_t i = 0; i < imageHeight; i += maxSectorSide) {
-        for(size_t j = 0; j < imageWidth; j += maxSectorSide) {
+    for(size_t i = 0; i < isettings.imageHeight; i += isettings.maxSectorSide) {
+        for(size_t j = 0; j < isettings.imageWidth; j += isettings.maxSectorSide) {
             size_t start_x = j;
             size_t start_y = i;
-            size_t end_x   = j + min((size_t)maxSectorSide, imageWidth - j);
-            size_t end_y   = i + min((size_t)maxSectorSide, imageHeight - i);
+            size_t end_x   = j + min((size_t)isettings.maxSectorSide, isettings.imageWidth - j);
+            size_t end_y   = i + min((size_t)isettings.maxSectorSide, isettings.imageHeight - i);
 
             sectors.push_back({start_x, start_y, end_x, end_y});
         }
     }
     size_t totalSectors = sectors.size();
-    size_t finishedSectors = 0;
 
     /*
     //DEBUG STUFF
@@ -76,136 +68,168 @@ png::image<png::rgb_pixel> calc_and_color(
     //Function pointer to the fractal function to call
     void (*fractal_fn_pointer)(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
-    const long double offset_re, const long double offset_im, const bool juliaMode, const long double julia_re, const long double julia_im,
-    const long double scalingFactor, const int max_iter, const long double bailout,
-    const int color_mode, const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write);
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write);
     //Initialize function pointer based on selected fractal
-    switch(fractal_type){
+    switch(fsettings.fractal_type){
         case 0:             //MANDELBROT
-            fractal_fn_pointer = &mandelbrot_color;
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &mandelbrot;
             break;
 
-        case 1:             //BURNING SHIP
-            fractal_fn_pointer = &burningShip_color;
+        case 1:             //TIPPETS MANDELBROT
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &tippets_mandelbrot;
             break;
 
-        case 2:             //MANDELBAR
-            fractal_fn_pointer = &mandelbar_color;
+        case 2:             //BURNING SHIP
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &burningShip;
             break;
 
-        case 3:             //SPADE FRACTAL
-            fractal_fn_pointer = &spadefract_color;
+        case 3:             //MANDELBAR
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &mandelbar;
+            break;
+
+        case 4:             //SPADE FRACTAL
+            if(fsettings.bailout < 0) fsettings.bailout = 4;
+            fractal_fn_pointer = &spadefract;
+            break;
+
+        case 5:             //MAGNET 1
+            if(fsettings.bailout < 0) fsettings.bailout = 128;
+            fractal_fn_pointer = &magnet_type1;
+            break;
+
+        case 6:             //MAGNET 2
+            if(fsettings.bailout < 0) fsettings.bailout = 1024;
+            fractal_fn_pointer = &magnet_type2;
+            break;
+
+        case 7:             //CACTUS
+            if(fsettings.bailout < 0) fsettings.bailout = 8;
+            fractal_fn_pointer = &cactus;
+            break;
+
+        case 8:             //ZUBIETA
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &zubieta;
+            break;
+
+        case 9:             //ZUBITHETA
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &zubitheta;
+            break;
+
+        case 10:            //LOGISTIC MAP
+            if(fsettings.bailout < 0) fsettings.bailout = 2;
+            fractal_fn_pointer = &logistic_map;
+            break;
+
+        case 99:             //BINOCULAR m = 4
+            if(fsettings.bailout < 0) fsettings.bailout = 1024;
+            fractal_fn_pointer = &binocular_m4;
             break;
 
         default:            //DEFAULT = MANDELBROT
-            fractal_fn_pointer = &mandelbrot_color;
+            fractal_fn_pointer = &mandelbrot;
             break;
     }
 
+    //Print info if required
+    if(verboseOutput) printInfo(isettings, fsettings, csettings);
 
-    //Heavy lifting: spawning all the threads to compute the fractal
-    if(verboseOutput) printInfo(imageWidth, imageHeight, maxSectorSide, fractal_type, offset_re, offset_im, juliaMode, julia_re, julia_im, scalingFactor, max_iter, bailout, colorMode);
-    //While I still have sectors to perform computations on
-    while(sectors.size() > 0) {
-        //If I can spawn threads
-        if(atomic_load(&runningThreads) < maxThreads) {
-            size_t start_x = sectors.back()[0];
-            size_t start_y = sectors.back()[1];
-            size_t end_x   = sectors.back()[2];
-            size_t end_y   = sectors.back()[3];
-            sectors.pop_back();
-            thread(fractal_fn_pointer,          //Fractal to launch
-                   start_x, start_y,            //(x,y) starting position
-                   end_x, end_y,                //(x,y) ending position
-                   offset_re, offset_im,        //Offset in the complex plane
-                   juliaMode,                   //Whether it should run in Julia mode or not
-                   julia_re, julia_im,          //Offsets of the constant c in Julia mode
-                   scalingFactor,               //Scaling factor
-                   max_iter,                    //Maximum number of iterations
-                   bailout,                     //Bailout radius
-                   colorMode,                   //Coloring mode of the image
-                   ref(palette),                //Reference to color palette
-                   ref(fractal_image)           //Reference to image to update pixels
-                   ).detach();
+    //Create threadpool for rendering
+    ThreadPool renderpool(maxThreads);
+    //vector of void to ensure the main threads proceeds only after all the sectors have rendered
+    vector<future<void>> completed_sectors;
 
-            runningThreads += 1;
-            ++finishedSectors;
-        }
+    //For every sector
+    for(auto s : sectors){
+        size_t start_x = s[0];
+        size_t start_y = s[1];
+        size_t end_x   = s[2];
+        size_t end_y   = s[3];
 
-        vcout << finishedSectors << "/" << totalSectors << " sectors finished\r";
-        usleep(100);
+        //Enqueue a job to the renderpool
+        completed_sectors.emplace_back(
+            renderpool.enqueue(
+                fractal_fn_pointer,          //Fractal to launch
+                start_x, start_y,            //(x,y) starting position
+                end_x, end_y,                //(x,y) ending position
+                fsettings,                   //fractal settings
+                csettings,                   //image settings
+                ref(palette),                //Reference to color palette
+                ref(fractal_image)           //Reference to image to update pixels
+            )
+        );
     }
 
-    //Wait for all the threads to finish
-    while(atomic_load(&runningThreads) > 0){
-        vcout << "Waiting " << runningThreads.load(memory_order_seq_cst) << " threads to finish\r";
-        usleep(1000);
+    //Once all the jobs are enqueued, wait for all of them to finish
+    for(size_t i = 0; i < completed_sectors.size(); ++i){
+        completed_sectors[i].get();
+        if(verboseOutput) cout << "Completed sectors: " << i << "/" << totalSectors << "\r";
     }
 
     return fractal_image;
 }
 
-/*
-size_t calc_all_iter(){
-    return 0;
-}
-
-png::rgb_pixel calc_all_colors(){
-    return png::rgb_pixel(0, 0, 0);
-}
-
-void color_image(){
-
-}
-*/
-
-void printInfo( const size_t imageWidth, const size_t imageHeight, const size_t maxSectorSide,                          //Image data and sector side
-                const int fractal_type, const long double offset_re, const long double offset_im,                       //Fractal type and offset from origin
-                const bool juliaMode, const long double julia_re, const long double julia_im,                           //Julia mode and value of c
-                const long double scalingFactor, const int max_iter, const long double bailout,                         //zoom, maximum iterations, bailout radius
-                const int colorMode){                                                                                   //coloring mode
+//----------------------------------------------------------------------------------------------------------------------------
+void printInfo(const imagesettings_t isettings, const fractalsettings_t fsettings, const colorsettings_t csettings){
 
     string fractal_name;
-    switch (fractal_type){
-        case 0: fractal_name = "Mandelbrot set"; break;
-        case 1: fractal_name = "Burning ship";   break;
-        case 2: fractal_name = "Mandelbar set";  break;
-        case 3: fractal_name = "Spade fractal";  break;
+    switch (fsettings.fractal_type){
+        case  0: fractal_name = "Mandelbrot set";   break;
+        case  1: fractal_name = "Tippets Mandel";   break;
+        case  2: fractal_name = "Burning ship";     break;
+        case  3: fractal_name = "Mandelbar set";    break;
+        case  4: fractal_name = "Spade fractal";    break;
+        case  5: fractal_name = "Magnet type I";    break;
+        case  6: fractal_name = "Magnet type II";   break;
+        case  7: fractal_name = "Cactus";           break;
+        case  8: fractal_name = "Zubieta";          break;
+        case  9: fractal_name = "Zubitheta";        break;
+        case 10: fractal_name = "Logistic map";     break;
         default:
-            fractal_name = "Unknown, defaulting to Mandelbrot";
+            fractal_name = "Unknown/undocumented";
             break;
     }
 
     string coloring_mode_name;
-    switch (colorMode){
+    switch (csettings.colorMode){
         case 0: coloring_mode_name = "binary (b/w)";  break;
-        case 1: coloring_mode_name = "ln";            break;
-        case 2: coloring_mode_name = "sqrt(iter)";    break;
-        case 3: coloring_mode_name = "cbrt(iter)";    break;
-        case 4: coloring_mode_name = "atan2(im, re)"; break;
+        case 1: coloring_mode_name = "linear";        break;
+        case 2: coloring_mode_name = "ln";            break;
+        case 3: coloring_mode_name = "sqrt(iter)";    break;
+        case 4: coloring_mode_name = "cbrt(iter)";    break;
+        case 5: coloring_mode_name = "S curve";       break;
+        case 6: coloring_mode_name = "atan2(im, re)"; break;
         default:
-            coloring_mode_name = "unknown, defaulting to binary";
+            coloring_mode_name = "Unknown/undocumented";
             break;
     }
 
-    cout << "Rendering: " << fractal_name << (juliaMode ? " (J)\n" : "\n");
-    cout << "Image properties: " << imageWidth << " x " << imageHeight << endl;
-    cout << "Sectors up to " << maxSectorSide << "x" << maxSectorSide << " = " << maxSectorSide * maxSectorSide << " pixels^2" << endl;
-    cout << "Iterations: " << max_iter << endl;
-    cout << "Bailout r.: " << bailout << endl;
-    cout << "Coloring mode: " << coloring_mode_name << " (" << colorMode << ")" << endl;
-    cout << "Centered at: (" << offset_re << ", " << offset_im << " i)" << endl;
-    if(juliaMode) cout << "Julia c: (" << julia_re << ", " << julia_im << " i)" << endl;
+    cout << "Rendering      : " << fractal_name << (fsettings.juliaMode ? " (J)" : "") << " (" << maxThreads << " thread(s))" << endl;
+    cout << "Image size     : " << isettings.imageWidth << " x " << isettings.imageHeight << endl;
+    cout << "Sectors up to  : " << isettings.maxSectorSide << "x" << isettings.maxSectorSide << " = " << isettings.maxSectorSide * isettings.maxSectorSide << " pixels^2" << endl;
+
+    cout << "Iterations     : " << fsettings.max_iter << endl;
+    cout << "Bailout radius : " << fsettings.bailout << endl;
+    cout << "Coloring mode  : " << coloring_mode_name << " (" << csettings.colorMode << ")" << endl;
+    cout << "Centered at    : (" << fsettings.offset_re << ", " << fsettings.offset_im << " i)" << endl;
+    if(fsettings.juliaMode) cout << "Julia c const. : (" << fsettings.julia_re << ", " << fsettings.julia_im << " i)" << endl;
+
     //Auxiliary variable, used when calculating scaling from pixel space to complex plane, to prevent stretching
-    const auto squareScale = min(imageWidth, imageHeight);
+    const auto squareScale = min(isettings.imageWidth, isettings.imageHeight);
     //Top left corner
-    const long double start_re = 4 * (- (long double)imageWidth / 2)  / ((long double)squareScale * scalingFactor) + offset_re;
-    const long double start_im = 4 * (- (long double)imageHeight / 2) / ((long double)squareScale * scalingFactor) + offset_im;
+    const long double start_re = 4 * (- (long double)isettings.imageWidth / 2)  / ((long double)squareScale * fsettings.scalingFactor) + fsettings.offset_re;
+    const long double start_im = 4 * (- (long double)isettings.imageHeight / 2) / ((long double)squareScale * fsettings.scalingFactor) + fsettings.offset_im;
     //Bottom right
-    const long double stop_re  = 4 * ((long double)imageWidth / 2)  / ((long double)squareScale * scalingFactor) + offset_re;
-    const long double stop_im  = 4 * ((long double)imageHeight / 2) / ((long double)squareScale * scalingFactor) + offset_im;
-    cout << "Span: (" << stop_re - start_re << " x " << stop_im - start_im << ")" << endl;
-    cout << "Scale: " << scalingFactor << endl;
+    const long double stop_re  = 4 * ((long double)isettings.imageWidth / 2)  / ((long double)squareScale * fsettings.scalingFactor) + fsettings.offset_re;
+    const long double stop_im  = 4 * ((long double)isettings.imageHeight / 2) / ((long double)squareScale * fsettings.scalingFactor) + fsettings.offset_im;
+    cout << "Span  : (" << stop_re - start_re << " x " << stop_im - start_im << ")" << endl;
+    cout << "Scale : " << fsettings.scalingFactor << endl;
 }
 
 #endif // CALC_AND_COLOR_HPP_INCLUDED

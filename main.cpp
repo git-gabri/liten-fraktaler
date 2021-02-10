@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
+#include <thread>
 #include <png++/png.hpp>
 #include <getopt.h>         //Needed for parsing command line arguments
+#include <structs.h>
 #include "calc_and_color.hpp"
 #include "misc_functions.hpp"
 
@@ -10,14 +12,14 @@
 #define MAX_IMAGE_WIDTH  1000000        //An image 1000000*1000000 would require >3TB of RAM
 #define MAX_IMAGE_HEIGHT 1000000
 #define MAX_SECTOR_SIDE  1000000
-#define MAX_FRACTAL_TYPE 3              //Because only 4 fractal types [0,3] are implemented
-#define MAX_COLOR_MODE   4              //Because only 5 color modes [0,4] are implemented
+
+#define FALLBACK_NUM_THREADS 4
 
 
 using namespace std;
 using namespace png;
 
-int maxThreads = 8;
+int maxThreads = FALLBACK_NUM_THREADS;
 
 /*Supported flags
 * -H            show help
@@ -48,12 +50,12 @@ TODO
 */
 //Parse flags and user input, sanitize it and if something is wrong print a corresponfing error
 int parseArgv(
-    int argc, char *argv[],                                                                             //argc and argv from main
-    size_t &imageWidth, size_t &imageHeight, size_t &maxSectorSide,                                     //image width, height and maximum sector side
-    int &fractal_type, long double &offset_re, long double &offset_im,                                  //fractal type, real and imaginary offsets
-    bool &juliaMode, long double &julia_re, long double &julia_im,                                      //run in julia mode, julia offsets (i.e. setting c constant)
-    long double &scalingFactor, int &max_iter, long double &bailout,                                    //zoom, maximum iterations, coloring mode, filename of config file for color palette
-    int &colorMode, string &palette_filename, string &image_filename, bool &verbose){                   //filename of output image file, verbose output flag
+    int argc, char *argv[],             //argc and argv from main
+    imagesettings_t& isettings,         //struct containing various image related settings
+    fractalsettings_t& fsettings,       //struct containing various fractal related settings
+    colorsettings_t& csettings,         //struct containing various color related settings
+    bool& verbose                       //verbose output flag
+    ){
 
     ///Parsing command line flags
     for(;;) {
@@ -61,45 +63,45 @@ int parseArgv(
         //------------------------------------------
         //Image related flags
         case 'w':       //Width
-            imageWidth = stoul(optarg);
+            isettings.imageWidth = stoul(optarg);
             continue;
         case 'h':       //Height
-            imageHeight = stoul(optarg);
+            isettings.imageHeight = stoul(optarg);
             continue;
         case 'S':       //Sector side
-            maxSectorSide = stoul(optarg);
+            isettings.maxSectorSide = stoul(optarg);
             continue;
         case 'o':       //Output filename
-            image_filename = optarg;
+            isettings.imageName = optarg;
             continue;
         //------------------------------------------
         //Fractal related flags
         case 'f':       //Fractal type
-            fractal_type = stoi(optarg);
+            fsettings.fractal_type = stoi(optarg);
             continue;
         case 'r':       //Offset real
-            offset_re = stold(optarg);
+            fsettings.offset_re = stold(optarg);
             continue;
         case 'i':       //Offset imaginary
-            offset_im = stold(optarg);
+            fsettings.offset_im = stold(optarg);
             continue;
         case 'j':       //Run in Julia mode
-            juliaMode = true;
+            fsettings.juliaMode = true;
             continue;
         case 'A':       //Real part of c in Julia mode
-            julia_re = stold(optarg);
+            fsettings.julia_re = stold(optarg);
             continue;
         case 'B':       //Imag part of c in Julia mode
-            julia_im = stold(optarg);
+            fsettings.julia_im = stold(optarg);
             continue;
         case 's':       //Scaling
-            scalingFactor = stold(optarg);
+            fsettings.scalingFactor = stold(optarg);
             continue;
         case 't':       //Maximum iterations
-            max_iter = stoi(optarg);
+            fsettings.max_iter = stoi(optarg);
             continue;
         case 'b':
-            bailout = stold(optarg);
+            fsettings.bailout = stold(optarg);
             continue;
         case 'T':       //Maximum threads
             maxThreads = stoi(optarg);
@@ -107,10 +109,10 @@ int parseArgv(
         //------------------------------------------
         //Colors related flags
         case 'p':       //Filename of config file for color palette
-            palette_filename = optarg;
+            csettings.paletteConfig = optarg;
             continue;
         case 'c':       //Coloring mode
-            colorMode = stoi(optarg);
+            csettings.colorMode = stoi(optarg);
             continue;
         //------------------------------------------
         //Other flags
@@ -139,57 +141,53 @@ int parseArgv(
     bool retval = 0;
     //-----------------------------------------------------------------------------------------------------
     //Checking image related variables
-    if(imageWidth > MAX_IMAGE_WIDTH){
+    if(isettings.imageWidth > MAX_IMAGE_WIDTH){
         cerr << "ERROR: image width too large. Maximum allowed: " << MAX_IMAGE_WIDTH << endl;
         retval = 1;
     }
-    if(imageHeight > MAX_IMAGE_HEIGHT){
+    if(isettings.imageHeight > MAX_IMAGE_HEIGHT){
         cerr << "ERROR: image height too high. Maximum allowed: " << MAX_IMAGE_HEIGHT << endl;
         retval = 1;
     }
-    if(maxSectorSide > MAX_SECTOR_SIDE){
+    if(isettings.maxSectorSide > MAX_SECTOR_SIDE){
         cerr << "ERROR: sector side too large. Maximum allowed: " << MAX_SECTOR_SIDE << endl;
         retval = 1;
     }
-    if(image_filename == ""){
+    if(isettings.imageName == ""){
         cerr << "ERROR: empty image name" << endl;
         retval = 1;
     }
     //-----------------------------------------------------------------------------------------------------
     //Checking fractal related variables
-    if(fractal_type < 0 || fractal_type > MAX_FRACTAL_TYPE){
-        cerr << "ERROR: fractal type out of range. Must be in [0," << MAX_FRACTAL_TYPE << "]" << endl;
-        retval = 1;
-    }
-    if(!isfinite(offset_re)){
+    if(!isfinite(fsettings.offset_re)){
         cerr << "ERROR: real offset must be a finite number" << endl;
         retval = 1;
     }
-    if(!isfinite(offset_im)){
+    if(!isfinite(fsettings.offset_im)){
         cerr << "ERROR: imaginary offset must be a finite number" << endl;
         retval = 1;
     }
-    if(!isfinite(julia_re)){
+    if(!isfinite(fsettings.julia_re)){
         cerr << "ERROR: real offset of c in Julia mode must be a finite number" << endl;
         retval = 1;
     }
-    if(!isfinite(offset_im)){
+    if(!isfinite(fsettings.offset_im)){
         cerr << "ERROR: imaginary offset of c in Julia mode must be a finite number" << endl;
         retval = 1;
     }
-    if(!isfinite(scalingFactor)){
+    if(!isfinite(fsettings.scalingFactor)){
         cerr << "ERROR: scaling must be a finite number" << endl;
         retval = 1;
     }
-    if(scalingFactor <= 0){
+    if(fsettings.scalingFactor <= 0){
         cerr << "ERROR: scaling must be a positive number" << endl;
         retval = 1;
     }
-    if(max_iter < 0){
+    if(fsettings.max_iter < 0){
         cerr << "ERROR: maximum number of iterations must be a positive number" << endl;
         retval = 1;
     }
-    if(bailout > 1.0e+2400l){
+    if(fsettings.bailout > 1.0e+2400l){
         cerr << "ERROR: bailout must be less than 1.0e+2400" << endl;
         retval = 1;
     }
@@ -199,12 +197,8 @@ int parseArgv(
     }
     //-----------------------------------------------------------------------------------------------------
     //Checking colors related variables
-    if(palette_filename == ""){
+    if(csettings.paletteConfig == ""){
         cerr << "ERROR: empty palette config file name" << endl;
-        retval = 1;
-    }
-    if(colorMode < 0 || colorMode > MAX_COLOR_MODE){
-        cerr << "ERROR: color mode out of range. Must be in [0," << MAX_COLOR_MODE << "]" << endl;
         retval = 1;
     }
 
@@ -224,39 +218,23 @@ int parseArgv(
 //FOUND IT! :)
 
 int main(int argc, char *argv[]) {
-    size_t imageWidth = 1920;
-    size_t imageHeight = 1080;
-    size_t maxSectorSide = 256;
+    imagesettings_t isettings{};
+    fractalsettings_t fsettings{};
+    colorsettings_t csettings{};
 
-    int fractal_type = 0;
-    long double offset_re = 0;
-    long double offset_im = 0;
-    bool juliaMode = false;
-    long double julia_re  = 0;
-    long double julia_im  = 0;
-    long double bailout   = 2;
-    long double scalingFactor = 1;
-    int max_iter = 2000;
+    maxThreads = thread::hardware_concurrency();
+    if(maxThreads == 0) maxThreads = FALLBACK_NUM_THREADS;
 
-    int colorMode = 3;
-
-    //Name of the output file should be without the extension. It will be added later
-    string imageName = {"fractal"};
-    string paletteConfig = {"palette"};
     vector<png::rgb_pixel> palette = {};
 
     bool verboseOutput = false;
-
     {
-        bool errors = parseArgv(argc, argv,
-                                imageWidth, imageHeight, maxSectorSide,
-                                fractal_type, offset_re, offset_im, juliaMode, julia_re, julia_im,
-                                scalingFactor, max_iter, bailout,
-                                colorMode, paletteConfig, imageName, verboseOutput);
+        bool errors = parseArgv(argc, argv, isettings, fsettings, csettings, verboseOutput);
+
         if(errors) return 1;
 
         //If the loading of the palette returns 1, it failed
-        if(load_palette(palette, paletteConfig)){
+        if(load_palette(palette, csettings.paletteConfig)){
             cerr << "WARN: palette could not be loaded correctly, defaulting to b/w" << endl;
             palette.clear();
             palette.push_back(png::rgb_pixel{0, 0, 0});         //Load black
@@ -266,15 +244,16 @@ int main(int argc, char *argv[]) {
     if(palette.size() == 0){cerr << "THIS SHOULDN'T HAVE HAPPENED" << endl; return 1;}
 
     //Declaring and initializing image after parsing user input, by assigning it the value of the computed fractal image
-    image<rgb_pixel> fractalImage = calc_and_color( imageWidth, imageHeight, maxSectorSide,
-                                                    fractal_type, offset_re, offset_im, juliaMode, julia_re, julia_im,
-                                                    scalingFactor, max_iter, bailout,
-                                                    colorMode, palette, verboseOutput);
+    chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
+    image<rgb_pixel> fractalImage = calc_and_color(isettings, fsettings, csettings, palette, verboseOutput);
+    chrono::high_resolution_clock::time_point end_time = chrono::high_resolution_clock::now();
 
     vcout << "                                        \r";
+    vcout << "Rendering took " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << " seconds" << endl;
     vcout << "Writing image..." << endl;
-    imageName = imageName + ".png";
-    fractalImage.write(imageName);
+    isettings.imageName = isettings.imageName + ".png";
+    fractalImage.write(isettings.imageName);
     vcout << "Done!" << endl;
+
     return EXIT_SUCCESS;
 }
