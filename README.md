@@ -3,10 +3,11 @@ A fractal rendering software, written in C++, inspired by a much more popular pr
 
 ## Compiling on Linux with `cmake` and `gcc`
 * Clone this repository
-* `cd` into the repository
-* `cd` into the repository
+* `cd` into the repository where the `CMakeLists.txt` is located
+* `cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Release -B./build`
+* `cmake --build ./build/ --config Release --target all`
 
-You should now have an executable called `liten-fraktaler`.
+You should now have an executable in the `build` folder called `liten-fraktaler`.
 
 ## Usage
 The help is available by launching the program with the `-H` or the `--help` flag, like this:  

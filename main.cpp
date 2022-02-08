@@ -9,8 +9,6 @@
 #include "coloring.hpp"
 #include "misc_functions.hpp"
 
-//TODO: allow image segmentation, i.e. subdivide big images that wouldn't fit in RAM, into multiple
-//smaller images, compute each of the individually, and save them on disk
 #define MAX_IMAGE_WIDTH  1000000        //An image 1000000*1000000 would require >3TB of RAM
 #define MAX_IMAGE_HEIGHT 1000000
 #define MAX_SECTOR_SIDE  1000000

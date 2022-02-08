@@ -19,5 +19,5 @@ add_executable(liten-fraktaler main.cpp ${LF_SOURCES})
 target_include_directories(liten-fraktaler PRIVATE ${LF_INCLUDE_DIRS})
 target_link_libraries(liten-fraktaler png pthread)
 
-target_compile_definitions(liten-fraktaler PUBLIC VERSION="0.8.15")
+target_compile_definitions(liten-fraktaler PUBLIC VERSION="0.8.18")
 target_compile_definitions(liten-fraktaler PUBLIC FIRST_ITERATION_IS_0=true)

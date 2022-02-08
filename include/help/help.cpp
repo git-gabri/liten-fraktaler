@@ -12,18 +12,16 @@ program called "Kalles Fraktaler".
 HELP
     -H
     --help              show this help
-
     -v                  
     --verbose           print verbose output during rendering, more user friendly.
 
 IMAGE RELATED FLAGS
     -w SIZE_T
-    --width SIZE_T      sets width of the image.  The default is 1920.
-    
+    --width SIZE_T
+                        sets width of the image.  The default is 1920.
     -h SIZE_T
-    --height SIZE_T     sets height of the image. The default is 1080.
-
-
+    --height SIZE_T
+                        sets height of the image. The default is 1080.
     -o STRING   
     --output-image-filename STRING
                         sets output file name to STRING. Do not include the extension, the
@@ -38,7 +36,6 @@ RENDERING RELATED FLAGS
                         this program subdivides the image in sectors, whose dimensions are
                         at maximum 64x64 pixels, by default.
                         This flag allows the user to change the maximum side of the sectors.
-
     -T SIZE_T
     --max-threads SIZE_T
                         sets maximum number of threads working on the rendering of the image.
@@ -70,7 +67,6 @@ FRACTAL RELATED FLAGS
                         "spade"         -> Spade fractal
                         "__testX"       -> X in [0; 9]. These are used for testing and development.
                         NOTE: not all the listed fractals will render well on default settings.
-
     -r LNG_DBL
     --real LNG_DBL
                         sets real part of the offset from the origin.
@@ -79,19 +75,16 @@ FRACTAL RELATED FLAGS
                         sets imag part of the offset from the origin.
                         The rendering of the fractal is done around a point whose coordinates
                         are specified by these two flags. The default is the origin (0, 0);
-
     -s LNG_DBL 
     --scaling-factor LNG_DBL
     --zoom LNG_DBL      
                         sets scaling factor.
                         Changes the amount of zoom done around the centeral rendering point.
                         The default is 1.
-
     -b LNG_DBL  
     --bailout LNG_DBL
                         sets bailout radius for the fractal.
                         The default varies from fractal to fractal.
-
     -j
     --julia-mode        enables Julia mode
                         In Julia mode the constant c in the iterative formulas to render the
@@ -99,20 +92,15 @@ FRACTAL RELATED FLAGS
                         in the complex plane. These three flags allow the user to run the
                         rendering in Julia mode and to set the real and imaginary part of this
                         constant. The default c is the origin (0, 0).
-
-    -A LNG_DBL          
+    -A LNG_DBL
     --julia-real LNG_DBL
                         sets real part of the constant c in Julia mode.
     -B LNG_DBL          
     --julia-imag LNG_DBL
                         sets imag part of the constant c in Julia mode.
-
-
     -t SIZE_T
     --max-iter SIZE_T
                         sets maximum number of iterations. The default is 2000.
-
-
 
 COLOR RELATED FLAGS
     -p STRING
@@ -133,7 +121,6 @@ COLOR RELATED FLAGS
                         to specify it) and if the palette file is not found or an error occurs
                         while trying to load the colors, the palette is loaded with only black
                         and white.
-
     -c NAME   
     --coloring-mode NAME   
                         sets coloring mode. The default is "cbrt".
@@ -145,12 +132,10 @@ COLOR RELATED FLAGS
                         "cbrt"          -> cubic root of iteraion
                         "scurve"        -> s shaped curve iteration mapping
                         "lastangle"     -> angle of the last iterated point
-
     -C          
     --crosshair         enables crosshair.
                         Draws a crosshair in the middle of the fractal image by inverting the colors
                         along the equator and the prime meridian.
-
 )foo";
     return;
 }
