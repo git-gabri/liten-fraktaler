@@ -1,0 +1,137 @@
+TODOs
+
+Priority 0, high
+    - rewrite help
+          fractals can't be accessed by using ints, only string aliases
+          coloring modes can't be accessed using ints, only string aliases
+
+Priority 1, medium
+    - make the entire liten fraktaler a namespace, with private variables, to be used kind of as a singleton, so you stop passing
+      around tons of variables.
+    - FIX SMOOTH COLORING
+    - solid guessing
+      solid guessing size
+    - make option to supersample
+      size 2x2 3x3 4x4 or 5x5
+      in the fractal loop make vector<pixel> samples(4/9/16/25, pixel(0, 0, 0)), so u dont push back every time
+      then in loop simply access the elements of the vector and put the computed color for the pixel in it
+      at the end of the supersampling per pixel, make avg on contents of vector
+      make option to use linear avg, gaussian avg, other avgs?
+    - implement history keeping in fsettings, with history_length. if 0, no history kept, else, keep
+    - make palette accept colors only in hex format RGB (or RGBA?) 000000/00000000, FFFFFF/FFFFFFFF
+
+Priority 2, low
+    - remove spade fractal
+    - figure out how the perpendicular variants of the fractal are made
+      right now it seems that, depending on the fractal you have to:
+      - do an abs to the real or imaginary part and change the sign, so it becomes -abs
+      - do an abs to the real or imaginary part and change the sign of the other, so it becomes abs/- or -/abs
+      this feature could be implemented by allowing the user to choose how to manipulate the number inbetween iterations, and it could be done
+      by adding prefixes to the fractal name, like N for negating, K for keeping as is, A for abs, so K_K_mandelbrot will be the same as mandelbrot
+      but A_A_mandelbrot will be the same as the burning ship, and NA_K_mandelbrot will render a perpendicular mandelbrot.
+    - make option to color with convergence and not divergcence, with
+      special behaviour on periodicity checking, bc if fractal is periodic, the value doesn't fall in a point trap
+      what if behaviour cahotic? if it hasn't diverged at the end of the checking, we might consider it a special case of convergence
+    - check the cave fractal, compared to the old liten fraktaler, with -s 0.8, the background color should be black but it isnt idk y
+
+Priority 3, very low
+    - grid that shows boundaries of sectors
+    - make new option to set initial conditions of z
+      either custom constant, converted value from grid, 1/converted value from grid, conj converted value from grid 
+    - make console_settings, to choose whether we want the verbose mode or not, to choose wheter to give warnings or not,
+      to make more stuff in the future
+    - random palette generation done in a separare program, using sine waves and what not for each of the
+      different color channels.
+
+Priority UNICORN, things that I wish already were in the program
+    - arbitrary precision
+    - series perturbation
+
+
+Other random stuff and snippets of code that were around and then were not included in the final code.
+They all represent features that I wanted to add but didn't have the time to do so
+
+const regex re_raw_output(R"foo(^--raw-output$)foo");
+const regex re_hybrid_fractal(R"foo(^--hybrid-fractal$)foo");
+NOTE: it will require 1 + n arguments. The first argument is the number n
+NOTE2: fractals which need extra parameters might be forbidden or share the same fractal parameters among them
+
+const regex re_set_bounds(R"foo(^--set-bounds$)foo");
+NOTE: it will require 4 arguments: min_re, max_re, min_im, max_im
+
+const regex re_rotation(R"foo(^-R|--rotation$)foo");
+const regex re_plane_warping(R"foo(^-u|--planewarp$)foo");
+const regex re_plane_warping_aliases(R"foo(^$)foo");
+
+const regex re_automatic_iterations(R"foo(^-d|--auto-iter$)foo");
+
+const regex re_palette_frequency(R"foo(^--palette-freq$)foo");
+const regex re_palette_phase(R"foo(^--palette-phase$)foo");
+
+const regex re_pickover_stalks(R"foo(^-P|--pick-stalks$)foo");
+const regex re_pickover_stalks_aliases(R"foo(^line$)foo");
+NOTE: 3 parameters will be required (a, b, c) from the equation ax + by + c = 0
+NOTE2: ok but what about quadratics and cubics? are they used? I don't think they are, but maybe quadratics...
+
+const regex re_config_output_filename(R"foo(^--config-output-filename$)foo");
+const regex re_config_input_filename(R"foo(^--config-input-filename$)foo");
+
+images in RGBA? might me useful for masks or idk
+add possibility to give raw data output
+add possibility to load and save configuration files for different fractals
+
+check the variables before starting the computations
+    if(isettings.image_width > MAX_IMAGE_WIDTH){
+        cerr << "ERROR: image width too large. Maximum allowed: " << MAX_IMAGE_WIDTH << endl;
+        retval = 1;
+    }
+    if(isettings.image_height > MAX_IMAGE_HEIGHT){
+        cerr << "ERROR: image height too high. Maximum allowed: " << MAX_IMAGE_HEIGHT << endl;
+        retval = 1;
+    }
+    if(isettings.max_sector_side > MAX_SECTOR_SIDE){
+        cerr << "ERROR: sector side too large. Maximum allowed: " << MAX_SECTOR_SIDE << endl;
+        retval = 1;
+    }
+    if(isettings.image_name == ""){
+        cerr << "ERROR: empty image name" << endl;
+        retval = 1;
+    }
+    //-----------------------------------------------------------------------------------------------------
+    //Checking fractal related variables
+    if(!isfinite(fsettings.offset_re)){
+        cerr << "ERROR: real offset must be a finite number" << endl;
+        retval = 1;
+    }
+    if(!isfinite(fsettings.offset_im)){
+        cerr << "ERROR: imaginary offset must be a finite number" << endl;
+        retval = 1;
+    }
+    if(!isfinite(fsettings.julia_re)){
+        cerr << "ERROR: real offset of c in Julia mode must be a finite number" << endl;
+        retval = 1;
+    }
+    if(!isfinite(fsettings.offset_im)){
+        cerr << "ERROR: imaginary offset of c in Julia mode must be a finite number" << endl;
+        retval = 1;
+    }
+    if(!isfinite(fsettings.scaling_factor)){
+        cerr << "ERROR: scaling must be a finite number" << endl;
+        retval = 1;
+    }
+    if(fsettings.scaling_factor <= 0){
+        cerr << "ERROR: scaling must be a positive number" << endl;
+        retval = 1;
+    }
+    if(fsettings.max_iter < 0){
+        cerr << "ERROR: maximum number of iterations must be a positive number" << endl;
+        retval = 1;
+    }
+    if(fsettings.bailout > 1.0e+2400l){
+        cerr << "ERROR: bailout must be less than 1.0e+2400" << endl;
+        retval = 1;
+    }
+    if(maxThreads < 0){
+        cerr << "ERROR: maximum number of threads must be a positive number" << endl;
+        retval = 1;
+    }

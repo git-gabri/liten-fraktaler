@@ -1,5 +1,5 @@
-#ifndef THREAD_POOL_H
-#define THREAD_POOL_H
+#ifndef THREAD_POOL_H_INCLUDED
+#define THREAD_POOL_H_INCLUDED
 
 /*
 Thread pool implementation written by Jakob Progsch
@@ -16,13 +16,13 @@ https://github.com/progschj/ThreadPool
 #include <functional>
 #include <stdexcept>
 
-class ThreadPool {
+class threadpool {
 public:
-    ThreadPool(size_t);
+    threadpool(size_t);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
         -> std::future<typename std::result_of<F(Args...)>::type>;
-    ~ThreadPool();
+    ~threadpool();
 private:
     // need to keep track of threads so we can join them
     std::vector< std::thread > workers;
@@ -36,7 +36,7 @@ private:
 };
 
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads)
+inline threadpool::threadpool(size_t threads)
     :   stop(false)
 {
     for(size_t i = 0;i<threads;++i)
@@ -65,7 +65,7 @@ inline ThreadPool::ThreadPool(size_t threads)
 
 // add new work item to the pool
 template<class F, class... Args>
-auto ThreadPool::enqueue(F&& f, Args&&... args)
+auto threadpool::enqueue(F&& f, Args&&... args)
     -> std::future<typename std::result_of<F(Args...)>::type>
 {
     using return_type = typename std::result_of<F(Args...)>::type;
@@ -80,7 +80,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
 
         // don't allow enqueueing after stopping the pool
         if(stop)
-            throw std::runtime_error("enqueue on stopped ThreadPool");
+            throw std::runtime_error("enqueue on stopped threadpool");
 
         tasks.emplace([task](){ (*task)(); });
     }
@@ -89,7 +89,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
 }
 
 // the destructor joins all threads
-inline ThreadPool::~ThreadPool()
+inline threadpool::~threadpool()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);

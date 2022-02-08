@@ -3,27 +3,30 @@
 
 #include <png++/png.hpp>
 #include <vector>
+#include <algorithm>
+#include <numeric>
+#include <functional>
 #include <cmath>
 #include <complex>
 
-#include <structs.h>
+#include "structs.hpp"
 #include "misc_functions.hpp"
+
+# define M_PIl          3.141592653589793238462643383279502884L
 
 using namespace std;
 
-extern atomic<int> runningThreads;
-
 inline long double real_from_posX(const size_t posX, const size_t width, const size_t squareScale, const fractalsettings_t fset){
-    return 4.0l * ((long double)posX - (long double)width / 2.0l)  / ((long double)squareScale * fset.scalingFactor) + fset.offset_re;
+    return 4.0l * ((long double)posX - (long double)width / 2.0l)  / ((long double)squareScale * fset.scaling_factor) + fset.offset_re;
 }
 
 inline long double imag_from_posY(const size_t posY, const size_t height, const size_t squareScale, const fractalsettings_t fset){
-    return 4.0l * ((long double)posY - (long double)height / 2.0l) / ((long double)squareScale * fset.scalingFactor) + fset.offset_im;
+    return 4.0l * ((long double)posY - (long double)height / 2.0l) / ((long double)squareScale * fset.scaling_factor) + fset.offset_im;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///MANDELBROT SET
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MANDELBROT SET
 //z(n+1) = z(n)^2 +c
 void mandelbrot(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -53,7 +56,7 @@ void mandelbrot(
     long double cre  = 0.0l;
     long double cim  = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -61,7 +64,7 @@ void mandelbrot(
             im = imag_from_posY(y, height, squareScale, fsettings);
             re_2 = re * re;
             im_2 = im * im;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -69,7 +72,7 @@ void mandelbrot(
                 cim = im;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (re_2 + im_2) < bailout_2) {
                 //Calculate z^2 + c with the values calculated in the previous iteration
                 im = 2 * re * im + cim;
@@ -81,16 +84,16 @@ void mandelbrot(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///TIPPETS MANDELBROT SET
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//TIPPETS MANDELBROT SET
 //z(n+1) = z(n)^2 +c but wrongly implemented
 /*
 Normal:
@@ -129,7 +132,7 @@ void tippets_mandelbrot(
     long double cre  = 0.0l;
     long double cim  = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -137,7 +140,7 @@ void tippets_mandelbrot(
             im = imag_from_posY(y, height, squareScale, fsettings);
             re_2 = re * re;
             im_2 = im * im;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -145,7 +148,7 @@ void tippets_mandelbrot(
                 cim = im;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (re_2 + im_2) < bailout_2) {
                 //Calculate tippets mandelbrot set
                 re = re_2 - im_2 + cre;
@@ -157,18 +160,18 @@ void tippets_mandelbrot(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///BURNING SHIP
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//BURNING SHIP
 //z(n+1) = (abs(re(z(n)) + i*abs(im(z(n)))) ^ 2 + c
-void burningShip(
+void burning_ship(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
     const fractalsettings_t fsettings, const colorsettings_t csettings,
     const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
@@ -196,7 +199,7 @@ void burningShip(
     long double cre  = 0.0l;
     long double cim  = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -204,7 +207,7 @@ void burningShip(
             im = imag_from_posY(y, height, squareScale, fsettings);
             re_2 = re * re;
             im_2 = im * im;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -212,7 +215,7 @@ void burningShip(
                 cim = im;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (re_2 + im_2) < bailout_2) {
                 //Calculate burning ship with the values calculated in the previous iteration
                 im = 2 * abs(re * im) + cim;
@@ -224,16 +227,16 @@ void burningShip(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///MANDELBAR SET
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MANDELBAR SET
 //z(n+1) = conj(z(n))^2 +c
 void mandelbar(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -263,7 +266,7 @@ void mandelbar(
     long double cre  = 0.0l;
     long double cim  = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -271,7 +274,7 @@ void mandelbar(
             im = imag_from_posY(y, height, squareScale, fsettings);
             re_2 = re * re;
             im_2 = im * im;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -279,7 +282,7 @@ void mandelbar(
                 cim = im;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (re_2 + im_2) < bailout_2) {
                 //Calculate conj(z)^2 + c with the values calculated in the previous iteration
                 im = -2 * re * im + cim;
@@ -291,16 +294,16 @@ void mandelbar(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, re, im, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///SPADE FRACTAL
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//SPADE FRACTAL
 //z(n+1) = z(n)^z(n) + z(n)/c
 void spadefract(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -374,7 +377,7 @@ void spadefract(
     long double zcre  = 0.0l;
     long double zcim  = 0.0l;
 
-    //Calculate the iterations of the pixels for each point in the assigned sector of the image
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -382,7 +385,7 @@ void spadefract(
             zim = imag_from_posY(y, height, squareScale, fsettings);
             zrho = sqrt(zre * zre + zim * zim);
             zphi = atan2(zim, zre);
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -390,7 +393,7 @@ void spadefract(
                 cim = zim;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && zrho < fsettings.bailout) {
                 //Calculate z^z, all the calculations are explained earlier
                 vre = log(zrho);
@@ -415,16 +418,16 @@ void spadefract(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///MAGNET FRACTAL TYPE I
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MAGNET FRACTAL TYPE I
 //z(n+1) = ((z(n)^2 + c - 1) / (2*z(n) + c - 2))^2
 void magnet_type1(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -443,11 +446,11 @@ void magnet_type1(
     complex<long double> numerator{};
     complex<long double> denominator{};
 
-    //Calculate the iterations of the pixels for each point in the assigned sector of the image
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 z.real(real_from_posX(x, width, squareScale, fsettings));
                 z.imag(imag_from_posY(y, height, squareScale, fsettings));
                 c.real(fsettings.julia_re);
@@ -459,7 +462,7 @@ void magnet_type1(
                 c.imag(imag_from_posY(y, height, squareScale, fsettings));
             }
 
-            int i = -1;
+            size_t i = -1;
             while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
                 //z(n+1) = ((z(n)^2 + c - 1) / (2*z(n) + c - 2))^2
                 numerator = z*z + c - complex<long double>{1, 0};
@@ -468,16 +471,16 @@ void magnet_type1(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///MAGNET FRACTAL TYPE II
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MAGNET FRACTAL TYPE II
 //z(n+1) = ((z(n)^3 + 3*(c - 1) * z(n) + (c - 1)*(c - 2)) / (3z(n)^2 + 3*(c - 2)*z(n) + (c - 1)*(c - 2) + 1))^2
 void magnet_type2(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -496,11 +499,11 @@ void magnet_type2(
     complex<long double> numerator{};
     complex<long double> denominator{};
 
-    //Calculate the iterations of the pixels for each point in the assigned sector of the image
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 z.real(real_from_posX(x, width, squareScale, fsettings));
                 z.imag(imag_from_posY(y, height, squareScale, fsettings));
                 c.real(fsettings.julia_re);
@@ -512,7 +515,7 @@ void magnet_type2(
                 c.imag(imag_from_posY(y, height, squareScale, fsettings));
             }
 
-            int i = -1;
+            size_t i = -1;
             while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
                 //z(n+1) = ((z(n)^3 + 3*(c - 1) * z(n) + (c - 1)*(c - 2)) / (3z(n)^2 + 3*(c - 2)*z(n) + (c - 1)*(c - 2) + 1))^2
                 numerator = z*z*z + complex<long double>{3, 0} * (c - complex<long double>{1, 0}) * z + (c - complex<long double>{1, 0}) * (c - complex<long double>{2, 0});    //(z(n)^3 + 3*(c - 1)*z(n) + (c - 1)*(c - 2))
@@ -522,16 +525,16 @@ void magnet_type2(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///CACTUS FRACTAL
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//CACTUS FRACTAL
 //z(n+1) = z(n)^3 + (c - 1) * z(n) - c
 void cactus(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -548,11 +551,11 @@ void cactus(
     complex<long double> z{};
     complex<long double> c{};
 
-    //Calculate the iterations of the pixels for each point in the assigned sector of the image
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 z.real(real_from_posX(x, width, squareScale, fsettings));
                 z.imag(imag_from_posY(y, height, squareScale, fsettings));
                 c.real(fsettings.julia_re);
@@ -570,23 +573,23 @@ void cactus(
                 c.imag(imag_from_posY(y, height, squareScale, fsettings));
             }
 
-            int i = -1;
+            size_t i = -1;
             while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
                 //z(n+1) = z(n)^3 + (c - 1) * z(n) - c
                 z = z*z*z + (c - complex<long double>{1, 0}) * z - c;
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///ZUBIETA FRACTAL
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//ZUBIETA FRACTAL
 //I don't know the real name of this fractal, I stole it from here http://paulbourke.net/fractals/Zubieta/
 //z(n+1) = z(n)^2 + c / z(n)
 void zubieta(
@@ -637,7 +640,7 @@ void zubieta(
     long double cre     = 0.0l;
     long double cim     = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -645,7 +648,7 @@ void zubieta(
             zim = imag_from_posY(y, height, squareScale, fsettings);
             zre_2 = zre * zre;
             zim_2 = zim * zim;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -653,7 +656,7 @@ void zubieta(
                 cim = zim;
             }
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (zre_2 + zim_2) < bailout_2) {
                 //Calculate z^2 + c/z
                 new_zre = zre_2 - zim_2 + (cre*zre + cim*zim) / (zre_2 + zim_2);
@@ -669,16 +672,16 @@ void zubieta(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///ZUBITHETA FRACTAL
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//ZUBITHETA FRACTAL
 //Because after eta comes theta. This is very similar to the Zubieta fractal
 //z(n+1) = z(n)^2 + z(n) / c
 void zubitheta(
@@ -731,7 +734,7 @@ void zubitheta(
     long double cim     = 0.0l;
     long double cnorm   = 0.0l;
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
@@ -739,7 +742,7 @@ void zubitheta(
             zim = imag_from_posY(y, height, squareScale, fsettings);
             zre_2 = zre * zre;
             zim_2 = zim * zim;
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 cre = fsettings.julia_re;
                 cim = fsettings.julia_im;
             } else {
@@ -748,7 +751,7 @@ void zubitheta(
             }
             cnorm = cre * cre + cim * cim;
 
-            int i = 0;
+            size_t i = 0;
             while((i < fsettings.max_iter) && (zre_2 + zim_2) < bailout_2) {
                 //Calculate z^2 + c/z
                 new_zre = zre_2 - zim_2 + (zre*cre + zim*cim) / cnorm;
@@ -764,16 +767,16 @@ void zubitheta(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///LOGISTIC MAP FRACTAL
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//LOGISTIC MAP FRACTAL
 //z(n+1) = c * z(n) * (1-z(n))
 void logistic_map(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
@@ -822,11 +825,11 @@ void logistic_map(
     long double wre     = 0.0l;     //real(z*(1-z))
     long double wim     = 0.0l;     //imag(z*(1-z))
 
-    //Calculate the values of the pixels for each point in the assigned sector of the image
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 zre = real_from_posX(x, width, squareScale, fsettings);
                 zim = imag_from_posY(y, height, squareScale, fsettings);
                 cre = fsettings.julia_re;
@@ -840,7 +843,7 @@ void logistic_map(
             zre_2 = zre * zre;
             zim_2 = zim * zim;
 
-            int i = -1;
+            size_t i = -1;
             while((i < fsettings.max_iter) && (zre_2 + zim_2) < bailout_2) {
                 //Calculate w = z*(1-z)
                 wre = zre - zre_2 + zim_2;
@@ -860,18 +863,97 @@ void logistic_map(
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-///BINOCULAR FRACTAL (m = 4)
-//z(n+1) = (z(n)^m + z(n)^2 + 1) / (2*z(n)^(m-1) - c + 1)
-void binocular_m4(
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//UNPOLISHED SQUARE FRACTAL
+//Re(n) = (Re(n-1) - Im(n-1) )*|Im(n-1)| + Re_c
+//Im(n) = (Re(n-1) + Im(n-1) )*|Re(n-1)| + Im_c
+void unpol_square(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    //Square of the bailout radius to chech the norm against it in the main iteration loop
+    const long double bailout_2 = fsettings.bailout * fsettings.bailout;
+
+    /*
+    Re(n) = (Re(n-1) - Im(n-1) )*|Im(n-1)| + Re_c
+    Im(n) = (Re(n-1) + Im(n-1) )*|Re(n-1)| + Im_c
+
+    In normal mode:
+    z(0) = 0
+    c depends on the posize_t in the complex plane
+
+    In Julia mode
+    z depends on the posize_t in the complex plane
+    c is set to a constant
+    */
+
+    long double zre     = 0.0l;
+    long double zim     = 0.0l;
+    long double new_zre = 0.0l;
+    long double new_zim = 0.0l;
+    long double cre     = 0.0l;
+    long double cim     = 0.0l;
+
+    //Calculate the values of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                zre = real_from_posX(x, width, squareScale, fsettings);
+                zim = imag_from_posY(y, height, squareScale, fsettings);
+                cre = fsettings.julia_re;
+                cim = fsettings.julia_im;
+            } else {
+                zre = 0.0l;
+                zim = 0.0l;
+                cre = real_from_posX(x, width, squareScale, fsettings);
+                cim = imag_from_posY(y, height, squareScale, fsettings);
+            }
+
+            size_t i = 0;
+            while((i < fsettings.max_iter) && (zre * zre + zim * zim) < bailout_2) {
+                //Calculate:
+                //Re(n) = (Re(n-1) - Im(n-1) )*|Im(n-1)| + Re_c
+                //Im(n) = (Re(n-1) + Im(n-1) )*|Re(n-1)| + Im_c
+                new_zre = (zre - zim) * abs(zim) + cre;
+                new_zim = (zre + zim) * abs(zre) + cim;
+
+                //Update z
+                zre = new_zre;
+                zim = new_zim;
+
+                //Update iteration counter
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, zre, zim, fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//MOTH FRACTAL
+//z(n+1) = (3*z^3 - 2*z - 1)/(z * c + 1)
+void moth(
     const size_t startX, const size_t startY, const size_t endX, const size_t endY,
     const fractalsettings_t fsettings, const colorsettings_t csettings,
     const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
@@ -886,11 +968,11 @@ void binocular_m4(
     complex<long double> z{};
     complex<long double> c{};
 
-    //Calculate the iterations of the pixels for each point in the assigned sector of the image
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
         for(size_t x = startX; x < endX; x++) {
             //Initialize doubles
-            if(fsettings.juliaMode){
+            if(fsettings.julia_mode){
                 z.real(real_from_posX(x, width, squareScale, fsettings));
                 z.imag(imag_from_posY(y, height, squareScale, fsettings));
                 c.real(fsettings.julia_re);
@@ -902,22 +984,269 @@ void binocular_m4(
                 c.imag(imag_from_posY(y, height, squareScale, fsettings));
             }
 
-
-            int i = -1;
+            size_t i = -1;
             while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
-                //z(n+1) = z(n+1) = (z(n)^4 + z(n)^2 + 1) / (2*z(n)^3 - c + 1)
-                z = (pow(z, 4) + pow(z, 2) + complex<long double>{1, 0}) / (complex<long double>{2, 0} * pow(z, 3) - c + complex<long double>{1, 0});
+                //z(n+1) = (3*z^3 - 2*z - 1)/(z * c + 1)
+                z = (complex<long double>(3,0) * z*z*z - complex<long double>(2, 0) * z - complex<long double>(1, 0))/(complex<long double>(2, 0) * z * c + complex<long double>(1, 0));
                 i++;
             }
 
-            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.colorMode, palette);
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }
     }
 
     return;
 }
 
-///TODO
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//CAVE FRACTAL
+//z(n+1) = (z(n)^3 + c)/(-2*z(n) + 1)
+void cave(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    complex<long double> z{};
+    complex<long double> c{};
+
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                z.real(real_from_posX(x, width, squareScale, fsettings));
+                z.imag(imag_from_posY(y, height, squareScale, fsettings));
+                c.real(fsettings.julia_re);
+                c.imag(fsettings.julia_im);
+            } else {
+                z.real(0);
+                z.imag(0);
+                c.real(real_from_posX(x, width, squareScale, fsettings));
+                c.imag(imag_from_posY(y, height, squareScale, fsettings));
+            }
+
+            size_t i = -1;
+            while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
+                //z(n+1) = (z^3 + c)/(-2*z + 1)
+                z = (z*z*z + c) / (complex<long double>(-2, 0)*z + complex<long double>(1, 0));
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//WANKEL FRACTAL
+//z(n+1) = (z(n)^3 + 1)/c
+void wankel(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    complex<long double> z{};
+    complex<long double> c{};
+
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                z.real(real_from_posX(x, width, squareScale, fsettings));
+                z.imag(imag_from_posY(y, height, squareScale, fsettings));
+                c.real(fsettings.julia_re);
+                c.imag(fsettings.julia_im);
+            } else {
+                z.real(0);
+                z.imag(0);
+                c.real(real_from_posX(x, width, squareScale, fsettings));
+                c.imag(imag_from_posY(y, height, squareScale, fsettings));
+            }
+
+            size_t i = -1;
+            while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
+                //z = (z^3 + 1)/c
+                z = (z * z * z + complex<long double>(1, 0)) / c;
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//SEA ANGEL FRACTAL
+//z(n+1) = (z(n)^4 + 3*z(n)^2 + c) / (5*z(n)^2 - 3*z(n) + 2)
+void sea_angel(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    complex<long double> z{};
+    complex<long double> c{};
+
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                z.real(real_from_posX(x, width, squareScale, fsettings));
+                z.imag(imag_from_posY(y, height, squareScale, fsettings));
+                c.real(fsettings.julia_re);
+                c.imag(fsettings.julia_im);
+            } else {
+                z.real(0);
+                z.imag(0);
+                c.real(real_from_posX(x, width, squareScale, fsettings));
+                c.imag(imag_from_posY(y, height, squareScale, fsettings));
+            }
+
+            size_t i = -1;
+            while((i < fsettings.max_iter) && z.real() * z.real() + z.imag() * z.imag() < fsettings.bailout) {
+                //z = (z^4 + 3z^2 + c) / (5z^2 - 3z + 2)
+                z = (z*z*z*z + complex<long double>(3,0)*z*z + c) / (complex<long double>(5,0)*z*z - complex<long double>(3,0)*z + complex<long double>(2,0));
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//TESTING FRACTALS
+//The formula in this fractal is subject to change from time to time to be able to quickly test new fractals
+void test(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    const static size_t historySize = 128;        //To hold z(n-1) and z(n-2)
+    vector<complex<long double>> z{};
+    complex<long double> new_z{};
+    complex<long double> c{};
+
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                z = vector<complex<long double>>(historySize, complex<long double>(real_from_posX(x, width, squareScale, fsettings), imag_from_posY(y, height, squareScale, fsettings)));
+                c.real(fsettings.julia_re);
+                c.imag(fsettings.julia_im);
+            } else {
+                z = vector<complex<long double>>(historySize, complex<long double>(0, 0));
+                c.real(real_from_posX(x, width, squareScale, fsettings));
+                c.imag(imag_from_posY(y, height, squareScale, fsettings));
+            }
+
+            size_t i = -1;
+            while((i < fsettings.max_iter) && (z.front().real() * z.front().real() + z.front().imag() * z.front().imag()) < fsettings.bailout) {
+                //z(n) = z(n-1)*z(n-2) + c
+                new_z = accumulate(z.begin(), z.end(), complex<long double>(1,0), multiplies<complex<long double>>()) + c;
+                z.pop_back();
+                z.insert(z.begin(), new_z);
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.front().real(), z.front().imag(), fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//The formula in this fractal is subject to change from time to time to be able to quickly test new fractals
+void test2(
+    const size_t startX, const size_t startY, const size_t endX, const size_t endY,
+    const fractalsettings_t fsettings, const colorsettings_t csettings,
+    const vector<png::rgb_pixel>& palette, png::image<png::rgb_pixel>& image_to_write) {
+
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto squareScale = min(width, height);
+
+    complex<long double> z{};
+    complex<long double> c{};
+
+    //Calculate the iterations of the pixels for each posize_t in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize doubles
+            if(fsettings.julia_mode){
+                z.real(real_from_posX(x, width, squareScale, fsettings));
+                z.imag(imag_from_posY(y, height, squareScale, fsettings));
+                c.real(fsettings.julia_re);
+                c.imag(fsettings.julia_im);
+            } else {
+                z.real(0);
+                z.imag(0);
+                c.real(real_from_posX(x, width, squareScale, fsettings));
+                c.imag(imag_from_posY(y, height, squareScale, fsettings));
+            }
+
+            size_t i = -1;
+            while((i < fsettings.max_iter) && (z.real() * z.real() + z.imag() * z.imag()) < fsettings.bailout) {
+                //z(n) = z(n-1)*z(n-2) + c
+                z = complex<long double>(0.25, 0) * (complex<long double>(2, 0) + z+z+z+z+z+z+z - (complex<long double>(2, 0) + z+z+z+z+z) * cos(z * complex<long double>(M_PIl, 0)));
+                i++;
+            }
+
+            image_to_write[y][x] = compute_color(i, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+        }
+    }
+
+    return;
+}
+
+//TODO
 //Find other fractals
+//BINOCULAR FRACTAL (m = 3, 4, 5)
+//z(n+1) = (z(n)^m + z(n)^2 + 1) / (2*z(n)^(m-1) - c + 1)
+//https://www.reddit.com/r/fractals/comments/r80ahw/polynomial_quotient_fractal_and_julia_set_z_az_bz/?utm_medium=android_app&utm_source=share
+//https://www.reddit.com/r/fractals/comments/reo9d0/factorized_polynomial_quotient_fractal_zoom_and/?utm_medium=android_app&utm_source=share
 
 #endif // FRACTALS_HPP_INCLUDED
