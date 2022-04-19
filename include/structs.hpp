@@ -2,7 +2,10 @@
 #define STRUCTS_HPP_INCLUDED
 
 #include <string>
+#include <vector>
+#include <complex>
 
+//Fracyal type enum
 enum class ftype{
     mandelbrot, tippets, burnship, mandelbar, magnet1, magnet2, cactus, cactus0, zubieta, zubitheta,
     logmap, unpolsquare, moth, cave, wankel, seaangel, smith, spade,
@@ -10,11 +13,13 @@ enum class ftype{
     unknown
 };
 
+//Coloring mode enum
 enum class coloring_mode{
     binary, linear, ln, sqrt, cbrt, scurve, lastangle,
     unknown
 };
 
+//Struct containing all the settings for the fractal
 struct fractalsettings_t {
     ftype fractal_type;
 
@@ -51,6 +56,7 @@ struct fractalsettings_t {
     max_iter(_max_iter) {}
 };
 
+//Struct containing all the settings for the output image
 struct imagesettings_t {
     size_t image_width;
     size_t image_height;
@@ -65,6 +71,7 @@ struct imagesettings_t {
     image_name(_imageName) {}
 };
 
+//Struct containing all the settings for the coloring of the image
 struct colorsettings_t {
     coloring_mode cmode;
     std::string palette_filename;
@@ -81,6 +88,7 @@ struct colorsettings_t {
     draw_crosshair(_draw_crosshair) {}
 };
 
+//Struct containing all the settings for the rendering of the fractal
 struct rendersettings_t {
     size_t max_sector_size;
     size_t max_threads;
@@ -93,6 +101,21 @@ struct rendersettings_t {
     max_threads(_max_threads) {}
 };
 
+//Struct containing information of a single rendered pixel
+//struct pixel_t{
+//    unsigned char red, green, blue, alpha;
+//
+//    //T -> to compute
+//    //C -> directly computed
+//    //A -> approximated (from rectangle guessing, ecc...)
+//    unsigned char status;
+//
+//    std::vector<std::complex<long double>> history;
+//    
+//    long double pickover_min_distance;
+//};
+
+//Struct containing all the settings for printing text on the console
 struct consolesettings_t {
     int verbose_output;
     int colored_output;

@@ -23,7 +23,7 @@ png::image<png::rgb_pixel> launch_render(   imagesettings_t& isettings,
 
     //To better distribute the workload between all the threads, the image gets divided into sectors, then
     //when one thread working on a sector finishes, we launch another one to work on another sector, so that we
-    //(almost) always have maxThreads working on a sector
+    //(almost) always have all the threads working on a sector
     vector<array<size_t, 4>> sectors = {};
     //Image of the fractal
     vcout << "Allocating image in RAM... " << flush;

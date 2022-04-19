@@ -7,7 +7,7 @@
 #include <complex>
 #include <png++/png.hpp>
 
-//Type alias for the pointer of the function implementing the fractal iteration
+//Type alias for the pointer to a function implementing the fractal iteration
 using fractal_fn_ptr_t = 
     std::complex<long double> (*)(const std::complex<long double>& last_z,
                                   const std::complex<long double>& c,
