@@ -312,7 +312,10 @@ complex<T> test1(const complex<T>& last_z, const complex<T>& c, const vector<com
 }
 template<typename T>
 complex<T> test2(const complex<T>& last_z, const complex<T>& c, const vector<complex<T>>& history, const vector<complex<T>>& extra_params, const fractalsettings_t& fsettings) {
-    const complex<T> new_z = last_z * last_z + c;
+    //For this the bailout can be 2 and the name of this fractal will be "Lakes" because the region in the top right corner reminds me of lakes
+    const complex<T> tmp(last_z.real() * last_z.real() - last_z.imag() * last_z.imag(), T{2} * last_z.real() * last_z.real());
+
+    const complex<T> new_z = tmp + c;
 
     return new_z;
 }
