@@ -41,14 +41,14 @@ png::image<png::rgb_pixel> launch_render(   imagesettings_t& isettings,
             sectors.push_back({start_x, start_y, end_x, end_y});
         }
     }
-    size_t totalSectors = sectors.size();
+    size_t total_sectors = sectors.size();
 
     /*
     //DEBUG STUFF
     size_t totalAreaSectors = 0;
     cout << "Image size: " << image_width << " x " << image_height << endl;
-    cout << "# of sectors: " << totalSectors << endl;
-    for(int i = 0; i < totalSectors; ++i){
+    cout << "# of sectors: " << total_sectors << endl;
+    for(int i = 0; i < total_sectors; ++i){
         cout << "Sector #" << i << ":" << endl;
         cout << "   Start : (" << sectors[i][0] << ", " << sectors[i][1] << ")" << endl;
         cout << "   Finish: (" << sectors[i][2] << ", " << sectors[i][3] << ")" << endl;
@@ -103,7 +103,7 @@ png::image<png::rgb_pixel> launch_render(   imagesettings_t& isettings,
     //Once all the jobs are enqueued, wait for all of them to finish
     for(size_t i = 0; i < completed_sectors.size(); ++i){
         completed_sectors[i].get();
-        vcout << "Completed sectors: " << i << "/" << totalSectors << "\r" << flush;
+        vcout << "Completed sectors: " << i << "/" << total_sectors << "\r" << flush;
     }
 
     //If specified, draw the crosshair on the output image
@@ -156,16 +156,8 @@ void block_renderer(
     vector<complex<long double>> history;
     vector<complex<long double>> extra_params;
 
-    complex<long double> (*fractal_fn_pointer)(
-        const complex<long double>& last_z,
-        const complex<long double>& c,
-        const vector<complex<long double>>& history,
-        const vector<complex<long double>>& extra_params,
-        const fractalsettings_t& fsettings
-    );
-
     //Assign fractal_fn_pointer wrt selected fractal
-    fractal_fn_pointer = init_fractal_fn_pointer(fsettings);
+    fractal_fn_ptr_t fractal_fn_pointer = init_fractal_fn_pointer(fsettings);
 
     //Calculate the values of the pixels for each point in the assigned sector of the image
     for(size_t y = startY; y < endY; y++) {
@@ -235,8 +227,8 @@ long double init_bailout_radius(const ftype& f){
     return ret_rad;
 }
 
-complex<long double> (*init_fractal_fn_pointer(const fractalsettings_t& fsettings))(const complex<long double>& last_iter, const complex<long double>& c, const vector<complex<long double>>& history, const vector<complex<long double>>& extra_params, const fractalsettings_t& fsettings){
-    complex<long double> (*ret_ptr)(const complex<long double>& last_z, const complex<long double>& c, const vector<complex<long double>>& history, const vector<complex<long double>>& extra_params, const fractalsettings_t& fsettings);
+fractal_fn_ptr_t init_fractal_fn_pointer(const fractalsettings_t& fsettings){
+    fractal_fn_ptr_t ret_ptr;
 
     switch(fsettings.fractal_type){
         default:
