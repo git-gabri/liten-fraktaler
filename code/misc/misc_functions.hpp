@@ -1,6 +1,7 @@
 #ifndef MISC_FUNCTIONS_HPP_INCLUDED
 #define MISC_FUNCTIONS_HPP_INCLUDED
 
+#include <iostream>
 #include <string>
 #include "structs.hpp"
 
@@ -8,11 +9,7 @@
 std::string ftype_to_string(const ftype& f);
 std::string coloring_mode_to_strign(const coloring_mode& c);
 
-//printinfo prototype
-void print_info(const imagesettings_t& isettings,
-                const fractalsettings_t& fsettings,
-                const colorsettings_t& csettings,
-                const rendersettings_t& rsettings,
-                const consolesettings_t& consettings);
+void print_error(const std::string& message, std::ostream& os = std::cerr);
+void print_warning(const std::string& message, std::ostream& os = std::cerr);
 
 #endif // MISC_FUNCTIONS_HPP_INCLUDED

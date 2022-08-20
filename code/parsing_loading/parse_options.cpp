@@ -1,16 +1,11 @@
-#include "option_parsing.hpp"
-#include "structs.hpp"
+#include "parse_options.hpp"
 #include "help.hpp"
 #include "misc_functions.hpp"
 
-#include <list>
-#include <vector>
-#include <string>
-#include <map>
 #include <regex>
-#include <iostream>
 
 using namespace std;
+using namespace lf::internals;
 
 int string_to_st(const string& str, size_t& ull){
     size_t tmp;
@@ -80,14 +75,6 @@ int extract_n_numbers_from_vec(const vector<string>& stringvec, const size_t& n,
     return 0;
 }
 
-void print_error(const string& message, ostream& os){
-    os << "[ERROR]: " << message << "\n";
-}
-
-void print_warning(const string& message, ostream& os){
-    os << "[WARN]: " << message << "\n";
-}
-
 //Function to parse a list of options, passed to the programs either from argv of by reading a configuration file
 //
 //Return values:
@@ -95,11 +82,7 @@ void print_warning(const string& message, ostream& os){
 // 0 -> OK  :   all the parsing happened succesfully
 // 1 -> OK  :   help was printed
 // 2 -> ERR :   generic error
-int parse_options(  vector<string> options,
-                    imagesettings_t& isettings, fractalsettings_t& fsettings, colorsettings_t& csettings,
-                    rendersettings_t& rsettings, consolesettings_t& consettings
-                 ){
-    
+int lf::parse_options(std::vector<std::string> options){
     //---------------------------------------------------------------------------------
     //START PARSING
     while(!options.empty()){

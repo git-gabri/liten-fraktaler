@@ -1,11 +1,9 @@
-#ifndef OPT_PARSE_HPP_INCLUDED
-#define OPT_PARSE_HPP_INCLUDED
+#ifndef PARSE_OPTIONS_HPP_INCLUDED
+#define PARSE_OPTIONS_HPP_INCLUDED
 
-#include "structs.hpp"
+#include "liten.hpp"
 
 #include <iostream>
-#include <vector>
-#include <string>
 #include <map>
 
 //Utility functions
@@ -20,9 +18,6 @@ int string_to_int(const std::string& str, int& i);
 int string_to_int(const std::vector<std::string>& vec, const std::vector<std::string>::iterator& it, int& i);
 
 int extract_n_numbers_from_vec(const std::vector<std::string>& stringvec, const size_t& n, std::vector<long double>& extracted_numbers);
-
-void print_error(const std::string& message, std::ostream& os = std::cerr);
-void print_warning(const std::string& message, std::ostream& os = std::cerr);
 
 //-------------------------------------------------------------------------------
 //Command line option definition and maps used as lookup tables
@@ -163,14 +158,5 @@ const std::map<std::string, coloring_mode> map_string_to_coloring_mode{
     {"scurve",      coloring_mode::scurve},
     {"lastangle",   coloring_mode::lastangle}
 };
-
-//Main function that parses all the options
-int parse_options(  std::vector<std::string> options,
-                    imagesettings_t& isettings,         //struct containing various image related settings
-                    fractalsettings_t& fsettings,       //struct containing various fractal related settings
-                    colorsettings_t& csettings,         //struct containing various color related settings
-                    rendersettings_t& rsettings,        //struct containing various information on how to render the image
-                    consolesettings_t& consettings      //struct containing various information on what the program should output on the console
-                 );
 
 #endif

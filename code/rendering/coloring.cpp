@@ -108,29 +108,3 @@ png::rgb_pixel compute_color(
 png::rgb_pixel invert_color(const png::rgb_pixel& c){
     return png::rgb_pixel(255 - c.red, 255 - c.green, 255 - c.blue);
 }
-
-int load_palette(vector<png::rgb_pixel>& palette, string file_name){
-    //Clear color palette
-    palette.clear();
-
-    //Open input text file
-    ifstream input_file(file_name, ifstream::in);
-    if(!input_file.is_open()) return 1;
-
-    //Buffer to read the file line by line
-    string line;
-    while(getline(input_file, line)){
-        //String stream to parse the line
-        istringstream iss(line);
-        //Temporary integers to store the values of the color, because the character 0 in the file gets interpreted as color 48,
-        //so we have to store the reading from the file in an integer, so that it gets interpreted as a number
-        int tmpred = 0, tmpgreen = 0, tmpblue = 0;
-
-        //Read from iss and check that we read 3 color values. If not, return 1
-        if(!(iss >> tmpred >> tmpgreen >> tmpblue)) return 1;
-
-        palette.push_back(png::rgb_pixel(uint8_t(tmpred), uint8_t(tmpgreen), uint8_t(tmpblue)));
-    }
-
-    return 0;
-}

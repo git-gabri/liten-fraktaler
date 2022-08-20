@@ -19,7 +19,7 @@
 using namespace std;
 
 //printinfo prototype
-void print_info( const imagesettings_t& isettings,
+void print_render_info( const imagesettings_t& isettings,
                 const fractalsettings_t& fsettings,
                 const colorsettings_t& csettings,
                 const rendersettings_t& rsettings,
@@ -174,7 +174,7 @@ png::image<png::rgb_pixel> launch_render(  imagesettings_t& isettings,
     }
 
     //Print info if required
-    if(consettings.verbose_output) print_info(isettings, fsettings, csettings, rsettings, consettings);
+    if(consettings.verbose_output) print_render_info(isettings, fsettings, csettings, rsettings, consettings);
 
     //Create threadpool for rendering
     threadpool renderpool(rsettings.max_threads);
@@ -236,7 +236,7 @@ png::image<png::rgb_pixel> launch_render(  imagesettings_t& isettings,
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
-void print_info( const imagesettings_t& isettings,
+void print_render_info( const imagesettings_t& isettings,
                 const fractalsettings_t& fsettings,
                 const colorsettings_t& csettings,
                 const rendersettings_t& rsettings,

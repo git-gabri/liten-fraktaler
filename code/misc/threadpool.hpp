@@ -1,5 +1,5 @@
-#ifndef THREAD_POOL_H_INCLUDED
-#define THREAD_POOL_H_INCLUDED
+#ifndef THREAD_POOL_HPP_INCLUDED
+#define THREAD_POOL_HPP_INCLUDED
 
 /*
 Thread pool implementation written by Jakob Progsch

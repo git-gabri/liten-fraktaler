@@ -8,14 +8,14 @@
 #include "structs.hpp"
 #include "misc_functions.hpp"
 
-# define M_PIl          3.141592653589793238462643383279502884L
+#define M_PIl          3.141592653589793238462643383279502884L
 
 using namespace std;
 
 inline long double real_from_posX(const size_t posX, const size_t width, const size_t squareScale, const fractalsettings_t fset);
 inline long double imag_from_posY(const size_t posY, const size_t height, const size_t squareScale, const fractalsettings_t fset);
 
-void init_fractal(const size_t& x, const size_t& y, const size_t& width, const size_t& height, const size_t& square_scale, complex<long double>& z, complex<long double>& c, vector<complex<long double>>& history, vector<complex<long double>>& extra_params, const fractalsettings_t& fset);
+void init_fractal(const size_t& x, const size_t& y, const size_t& width, const size_t& height, const size_t& square_scale, complex<long double>& z, complex<long double>& c, [[maybe_unused]] vector<complex<long double>>& history, [[maybe_unused]] vector<complex<long double>>& extra_params, const fractalsettings_t& fset);
 
 //Mandelbrot set
 //z(n+1) = z(n)^2 +c

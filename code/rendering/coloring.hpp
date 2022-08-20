@@ -1,3 +1,6 @@
+#ifndef COLORING_HPP_INCLUDED
+#define COLORING_HPP_INCLUDED
+
 #include "structs.hpp"
 
 #include <string>
@@ -30,15 +33,4 @@ png::rgb_pixel compute_color(
 //Function to invert a single color
 png::rgb_pixel invert_color(const png::rgb_pixel& c);
 
-//Function to load the color palette from file
-//Returns 0 if the loading was succesful, 1 if some errors occurred
-/*The config file of the color palette should have the following format
-* uint8 uint8 uint8
-* uint8 uint8 uint8
-* uint8 uint8 uint8
-* [...]
-*
-* Each line represents a color to be loaded in the color palette, the first row corresponds
-* to the RED channel, the middle row to the GREEN channel and the last row to the BLUE channel
-*/
-int load_palette(std::vector<png::rgb_pixel>& palette, std::string file_name);
+#endif

@@ -1,4 +1,6 @@
 #include "misc_functions.hpp"
+#include "liten.hpp"
+
 #include <iostream>
 
 using namespace std;
@@ -66,13 +68,7 @@ string coloring_mode_to_strign(const coloring_mode& c){
 }
 
 //Function to print info about the current settings of the program
-void print_info(const imagesettings_t& isettings,
-                const fractalsettings_t& fsettings,
-                const colorsettings_t& csettings,
-                const rendersettings_t& rsettings,
-                const consolesettings_t& consettings
-              ){
-
+void lf::internals::print_render_info(){
     string fractal_name = ftype_to_string(fsettings.fractal_type);
 
     const string coloring_mode_name = coloring_mode_to_strign(csettings.cmode);
@@ -97,4 +93,12 @@ void print_info(const imagesettings_t& isettings,
     const long double stop_im  = 4 * ((long double)isettings.image_height / 2) / ((long double)square_scale * fsettings.scaling_factor) + fsettings.offset_im;
     cout << "Span  : (" << stop_re - start_re << " x " << stop_im - start_im << ")" << endl;
     cout << "Scale : " << fsettings.scaling_factor << endl;
+}
+
+void print_error(const std::string& message, std::ostream& os){
+    os << "[ERROR]: " << message << "\n";
+}
+
+void print_warning(const std::string& message, std::ostream& os){
+    os << "[WARN]: " << message << "\n";
 }
