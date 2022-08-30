@@ -44,17 +44,47 @@ namespace lf{
         void print_render_info();
 
         //Get function pointer to block renderer
-        block_renderer_fn_ptr_t get_block_renderer_ptr(const ftype& fractal_type);
-
-        //Template of block renderer
+        //Switch wrt the type of block renderer used
+        block_renderer_fn_ptr_t get_block_renderer_ptr();
+        //Switch wrt the type of fractal to render
+        block_renderer_fn_ptr_t gbr_select_fractal();       //gbr = get_block_renderer, function called by get_block_renderer_ptr
         template<fractal_fn_ptr_t fractal_func>
-        void block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        block_renderer_fn_ptr_t gbr_select_renderer();      //gbr = get_block_renderer, function called by gbr_select_fractal
+
+        //Different block renderers used in the program
+        //Basic block renderer which iterates over all pixels in a block and colors them
+        template<fractal_fn_ptr_t fractal_func>
+        void basic_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void mibc_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+
+        //Block renderers for the different test fractals. Each of them has its own
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test0(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test1(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test2(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test3(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test4(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test5(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test6(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test7(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test8(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        template<fractal_fn_ptr_t fractal_func>
+        void block_renderer_test9(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
 
         //Get default bailout radius for different fractals
         long double default_bailout_radius(const ftype& f);
     }
 }
 
-#include "block_renderer.ipp"
+#include "block_renderers.ipp"
 
 #endif

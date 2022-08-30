@@ -30,6 +30,8 @@ enum class cmdline_option{
 
     set_sector_size,
     set_max_threads,
+    set_renderer,
+    set_mibc_max_iter,
 
     set_fractal,
     set_real_offset, set_imag_offset,
@@ -54,6 +56,8 @@ const std::map<cmdline_option, size_t> map_cmdlineopt_num_elem_to_pop{
 
     {cmdline_option::set_sector_size, 2},
     {cmdline_option::set_max_threads, 2},
+    {cmdline_option::set_renderer, 2},
+    {cmdline_option::set_mibc_max_iter, 2},
 
     {cmdline_option::set_fractal, 2},
     {cmdline_option::set_real_offset, 2},
@@ -88,6 +92,8 @@ const std::map<std::string, cmdline_option> map_str_to_cmdlineopt{
     {"--sector-size",   cmdline_option::set_sector_size},
     {"-T",              cmdline_option::set_max_threads},
     {"--max-threads",   cmdline_option::set_max_threads},
+    {"--renderer",      cmdline_option::set_renderer},
+    {"--mibc-max-iter", cmdline_option::set_mibc_max_iter},
 
     {"-f",              cmdline_option::set_fractal},
     {"--fractal",       cmdline_option::set_fractal},
@@ -147,6 +153,22 @@ const std::map<std::string, ftype> map_string_to_ftype{
     {"__test7", ftype::test7},
     {"__test8", ftype::test8},
     {"__test9", ftype::test9}
+};
+
+const std::map<std::string, rtype> map_string_to_rtype{
+    {"basic",   rtype::basic},
+    {"mibc",    rtype::mibc},
+
+    {"__test0", rtype::test0},
+    {"__test1", rtype::test1},
+    {"__test2", rtype::test2},
+    {"__test3", rtype::test3},
+    {"__test4", rtype::test4},
+    {"__test5", rtype::test5},
+    {"__test6", rtype::test6},
+    {"__test7", rtype::test7},
+    {"__test8", rtype::test8},
+    {"__test9", rtype::test9}
 };
 
 const std::map<std::string, coloring_mode> map_string_to_coloring_mode{

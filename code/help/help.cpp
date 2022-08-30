@@ -42,6 +42,28 @@ RENDERING RELATED FLAGS
                         By default, the program tries to automatically detect the number of
                         available threads on the host machine and uses all of them. If this
                         detection fails, the maximum number of threads is set to 1.
+    --renderer NAME
+                        sets the renderer to use for the current image.
+                        The default is "basic". The recognized names are
+                        "basic"         -> classic renderer, iterates the fractal function for
+                                           each pixel, checks for exit condition after calculating
+                                           every iteration
+                        "mibc"          -> Multiple Iteration Between Checks, works similarly to
+                                           the "basic" renderer but instead of checking for the
+                                           exit condition after every iteration, it performs 2^x
+                                           iterations then checks. If the exit condition is not satisfied,
+                                           it tries to perform 2^x more iterations. If it's satisfied
+                                           it rolls back befor the initial 2^x iterations were performed
+                                           and tries to iterate for 2^(x-1). And so on util only 1
+                                           iteration is performed.
+                                           Works well when the maximum number of iterations is high and the
+                                           points in the image take a lot of time to diverge.
+
+    --mibc-max-iter SIZE_T
+                        sets the number of iterations initially performed by the "mibc" renderer.
+                        If the renderer is not set to "mibc" this has no effect.
+                        The number is internally rounded to the closest next power of 2 that is >= than
+                        the given argument.
 
 FRACTAL RELATED FLAGS
     -f NAME

@@ -56,7 +56,7 @@ png::image<png::rgb_pixel> lf::launch_render(){
     */
 
     //Function pointer to the fractal function to call
-    block_renderer_fn_ptr_t block_renderer_pointer = get_block_renderer_ptr(fsettings.fractal_type);
+    block_renderer_fn_ptr_t block_renderer_pointer = get_block_renderer_ptr();
 
     //Init bailout radius to default if necessary
     if(fsettings.bailout < 0)
@@ -88,6 +88,7 @@ png::image<png::rgb_pixel> lf::launch_render(){
         );
     }
 
+    vcout << "Completed sectors: 0/" << total_sectors << "\r" << flush;
     //Once all the jobs are enqueued, wait for all of them to finish
     for(size_t i = 0; i < completed_sectors.size(); ++i){
         completed_sectors[i].get();
@@ -121,41 +122,75 @@ png::image<png::rgb_pixel> lf::launch_render(){
     return fractal_image;
 }
 
-block_renderer_fn_ptr_t lf::internals::get_block_renderer_ptr(const ftype& fractal_type){
+block_renderer_fn_ptr_t lf::internals::get_block_renderer_ptr(){
+    // The selection is performed this way:
+    // gbr_select_fractal has a big switch statement on the fractal type.
+    // 
+    // For each of the fractals a gbr_select_renderer<fractal_type> is called and the return value
+    // is returned by gbr_select_fractal
+
+    return gbr_select_fractal();
+}
+
+block_renderer_fn_ptr_t lf::internals::gbr_select_fractal(){
     block_renderer_fn_ptr_t ret_ptr;
 
-    switch(fractal_type){
+    switch(fsettings.fractal_type){
         default:
-        case ftype::mandelbrot:     ret_ptr = &block_renderer<mandelbrot<long double>>;             break;
-        case ftype::tippets:        ret_ptr = &block_renderer<tippets_mandelbrot<long double>>;     break;
-        case ftype::burnship:       ret_ptr = &block_renderer<burning_ship<long double>>;           break;
-        case ftype::mandelbar:      ret_ptr = &block_renderer<mandelbar<long double>>;              break;
-        case ftype::magnet1:        ret_ptr = &block_renderer<magnet_type1<long double>>;           break;
-        case ftype::magnet2:        ret_ptr = &block_renderer<magnet_type2<long double>>;           break;
-        case ftype::cactus:         ret_ptr = &block_renderer<cactus<long double>>;                 break;
-        case ftype::cactus0:        ret_ptr = &block_renderer<cactus<long double>>;                 break;
-        case ftype::zubieta:        ret_ptr = &block_renderer<zubieta<long double>>;                break;
-        case ftype::zubitheta:      ret_ptr = &block_renderer<zubitheta<long double>>;              break;
-        case ftype::logmap:         ret_ptr = &block_renderer<logistic_map<long double>>;           break;
-        case ftype::unpolsquare:    ret_ptr = &block_renderer<unpol_square<long double>>;           break;
-        case ftype::moth:           ret_ptr = &block_renderer<moth<long double>>;                   break;
-        case ftype::cave:           ret_ptr = &block_renderer<cave<long double>>;                   break;
-        case ftype::wankel:         ret_ptr = &block_renderer<wankel<long double>>;                 break;
-        case ftype::seaangel:       ret_ptr = &block_renderer<sea_angel<long double>>;              break;
-        case ftype::smith:          ret_ptr = &block_renderer<smith<long double>>;                  break;
+        case ftype::mandelbrot:     ret_ptr = gbr_select_renderer<&mandelbrot<long double>>();              break;
+        case ftype::tippets:        ret_ptr = gbr_select_renderer<&tippets_mandelbrot<long double>>();      break;
+        case ftype::burnship:       ret_ptr = gbr_select_renderer<&burning_ship<long double>>();            break;
+        case ftype::mandelbar:      ret_ptr = gbr_select_renderer<&mandelbar<long double>>();               break;
+        case ftype::magnet1:        ret_ptr = gbr_select_renderer<&magnet_type1<long double>>();            break;
+        case ftype::magnet2:        ret_ptr = gbr_select_renderer<&magnet_type2<long double>>();            break;
+        case ftype::cactus:         ret_ptr = gbr_select_renderer<&cactus<long double>>();                  break;
+        case ftype::cactus0:        ret_ptr = gbr_select_renderer<&cactus<long double>>();                  break;
+        case ftype::zubieta:        ret_ptr = gbr_select_renderer<&zubieta<long double>>();                 break;
+        case ftype::zubitheta:      ret_ptr = gbr_select_renderer<&zubitheta<long double>>();               break;
+        case ftype::logmap:         ret_ptr = gbr_select_renderer<&logistic_map<long double>>();            break;
+        case ftype::unpolsquare:    ret_ptr = gbr_select_renderer<&unpol_square<long double>>();            break;
+        case ftype::moth:           ret_ptr = gbr_select_renderer<&moth<long double>>();                    break;
+        case ftype::cave:           ret_ptr = gbr_select_renderer<&cave<long double>>();                    break;
+        case ftype::wankel:         ret_ptr = gbr_select_renderer<&wankel<long double>>();                  break;
+        case ftype::seaangel:       ret_ptr = gbr_select_renderer<&sea_angel<long double>>();               break;
+        case ftype::smith:          ret_ptr = gbr_select_renderer<&smith<long double>>();                   break;
 
-        case ftype::spade:          ret_ptr = &block_renderer<spadefract<long double>>;             break;
+        case ftype::spade:          ret_ptr = gbr_select_renderer<&spadefract<long double>>();              break;
 
-        case ftype::test0:          ret_ptr = &block_renderer<test0<long double>>;                  break;
-        case ftype::test1:          ret_ptr = &block_renderer<test1<long double>>;                  break;
-        case ftype::test2:          ret_ptr = &block_renderer<test2<long double>>;                  break;
-        case ftype::test3:          ret_ptr = &block_renderer<test3<long double>>;                  break;
-        case ftype::test4:          ret_ptr = &block_renderer<test4<long double>>;                  break;
-        case ftype::test5:          ret_ptr = &block_renderer<test5<long double>>;                  break;
-        case ftype::test6:          ret_ptr = &block_renderer<test6<long double>>;                  break;
-        case ftype::test7:          ret_ptr = &block_renderer<test7<long double>>;                  break;
-        case ftype::test8:          ret_ptr = &block_renderer<test8<long double>>;                  break;
-        case ftype::test9:          ret_ptr = &block_renderer<test9<long double>>;                  break;
+        case ftype::test0:          ret_ptr = gbr_select_renderer<&test0<long double>>();                   break;
+        case ftype::test1:          ret_ptr = gbr_select_renderer<&test1<long double>>();                   break;
+        case ftype::test2:          ret_ptr = gbr_select_renderer<&test2<long double>>();                   break;
+        case ftype::test3:          ret_ptr = gbr_select_renderer<&test3<long double>>();                   break;
+        case ftype::test4:          ret_ptr = gbr_select_renderer<&test4<long double>>();                   break;
+        case ftype::test5:          ret_ptr = gbr_select_renderer<&test5<long double>>();                   break;
+        case ftype::test6:          ret_ptr = gbr_select_renderer<&test6<long double>>();                   break;
+        case ftype::test7:          ret_ptr = gbr_select_renderer<&test7<long double>>();                   break;
+        case ftype::test8:          ret_ptr = gbr_select_renderer<&test8<long double>>();                   break;
+        case ftype::test9:          ret_ptr = gbr_select_renderer<&test9<long double>>();                   break;
+    }
+
+    return ret_ptr;
+}
+
+template<fractal_fn_ptr_t fractal_func>
+block_renderer_fn_ptr_t lf::internals::gbr_select_renderer(){
+    block_renderer_fn_ptr_t ret_ptr;
+
+    switch(rsettings.renderer_type){
+        default:
+        case rtype::basic:          ret_ptr = &basic_block_renderer<fractal_func>;                          break;
+        case rtype::mibc:           ret_ptr = &mibc_block_renderer<fractal_func>;                           break;
+
+        case rtype::test0:          ret_ptr = &block_renderer_test0<fractal_func>;                          break;
+        case rtype::test1:          ret_ptr = &block_renderer_test1<fractal_func>;                          break;
+        case rtype::test2:          ret_ptr = &block_renderer_test2<fractal_func>;                          break;
+        case rtype::test3:          ret_ptr = &block_renderer_test3<fractal_func>;                          break;
+        case rtype::test4:          ret_ptr = &block_renderer_test4<fractal_func>;                          break;
+        case rtype::test5:          ret_ptr = &block_renderer_test5<fractal_func>;                          break;
+        case rtype::test6:          ret_ptr = &block_renderer_test6<fractal_func>;                          break;
+        case rtype::test7:          ret_ptr = &block_renderer_test7<fractal_func>;                          break;
+        case rtype::test8:          ret_ptr = &block_renderer_test8<fractal_func>;                          break;
+        case rtype::test9:          ret_ptr = &block_renderer_test9<fractal_func>;                          break;
     }
 
     return ret_ptr;

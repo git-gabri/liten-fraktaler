@@ -165,6 +165,53 @@ int lf::parse_options(std::vector<std::string> options){
             }   break;
 
             //---------------------------------------------------------------------
+            case cmdline_option::set_renderer:
+            {   rtype tmp_renderer_type = rtype::unknown;
+                if(options.size() < 2){
+                    print_error("not enought arguments have been provided to set the renderer");
+                    return 2;
+                }
+
+                const string tmp_renderer_str = *(options.begin() + 1);
+                if(map_string_to_rtype.contains(tmp_renderer_str))
+                    tmp_renderer_type = map_string_to_rtype.at(tmp_renderer_str);
+                else{
+                    print_error("unspecified/specified renderer is invalid");
+                    return 2;
+                }
+
+                //If the selected fractal is one of the testing ones or is unknown a warning is printed on screen
+                if(tmp_renderer_type == rtype::test0 || tmp_renderer_type == rtype::test1 || tmp_renderer_type == rtype::test2 ||
+                   tmp_renderer_type == rtype::test3 || tmp_renderer_type == rtype::test4 || tmp_renderer_type == rtype::test5 ||
+                   tmp_renderer_type == rtype::test6 || tmp_renderer_type == rtype::test7 || tmp_renderer_type == rtype::test8 ||
+                   tmp_renderer_type == rtype::test9)
+                    print_warning("selected renderer is a test renderer");
+
+                rsettings.renderer_type = tmp_renderer_type;
+            }   break;
+
+            //---------------------------------------------------------------------
+            case cmdline_option::set_mibc_max_iter:
+            {   size_t not_rounded_mibc_max;
+                if(string_to_st(options, options.begin() + 1, not_rounded_mibc_max)){
+                    print_error("unspecified/specified maximum number of iterations between checks is invalid");
+                    return 2;
+                }
+                else{
+                    //Round up not_rounded_mibc_max to next power of 2 >= than it
+                    size_t init_mibc_max = 1;
+                    while(init_mibc_max < not_rounded_mibc_max && init_mibc_max != 0)
+                        init_mibc_max *= 2;
+
+                    //Checks if init_mibc_max got an overflow
+                    if(init_mibc_max == 0)
+                        init_mibc_max = (size_t(1) << size_t(DEFAULT_MIBC_MAX_ITER_POW2EXP));
+
+                    rsettings.mibc_max_iter_between_checks = init_mibc_max;
+                }
+            }   break;
+
+            //---------------------------------------------------------------------
             case cmdline_option::set_fractal:
             {   ftype tmp_fractal_type = ftype::unknown;
                 if(options.size() < 2){

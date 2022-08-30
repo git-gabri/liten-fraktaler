@@ -13,6 +13,13 @@ enum class ftype{
     unknown
 };
 
+//Renderer type enum
+enum class rtype{
+    basic, mibc,
+    test0, test1, test2, test3, test4, test5, test6, test7, test8, test9,
+    unknown
+};
+
 //Coloring mode enum
 enum class coloring_mode{
     binary, linear, ln, sqrt, cbrt, scurve, lastangle,
@@ -90,15 +97,34 @@ struct colorsettings_t {
 
 //Struct containing all the settings for the rendering of the fractal
 struct rendersettings_t {
+    rtype renderer_type;
+
     size_t max_sector_size;
     size_t max_threads;
 
+    size_t mibc_max_iter_between_checks;
+
     rendersettings_t(
+        const rtype& _renderer_type = rtype::basic,
         const size_t& _max_sector_size = 64,
-        const size_t& _max_threads = 1
+        const size_t& _max_threads = 1,
+        const size_t& _mibc_max_iter_between_checks = (size_t(1) << size_t(DEFAULT_MIBC_MAX_ITER_POW2EXP))
     ) :
+    renderer_type(_renderer_type),
     max_sector_size(_max_sector_size),
-    max_threads(_max_threads) {}
+    max_threads(_max_threads)
+    {
+        //Round up _mibc_max_iter_between_checks to next power of 2 >= than it
+        size_t init_mibc_max = 1;
+        while(init_mibc_max < _mibc_max_iter_between_checks && init_mibc_max != 0)
+            init_mibc_max *= 2;
+
+        //Checks if init_mibc_max got an overflow
+        if(init_mibc_max == 0)
+            mibc_max_iter_between_checks = (size_t(1) << size_t(DEFAULT_MIBC_MAX_ITER_POW2EXP));
+        
+        mibc_max_iter_between_checks = init_mibc_max;
+    }
 };
 
 //Struct containing information of a single rendered pixel

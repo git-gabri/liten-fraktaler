@@ -243,9 +243,9 @@ void print_render_info( const imagesettings_t& isettings,
                 const consolesettings_t& consettings
               ){
 
-    string fractal_name = ftype_to_string(fsettings.fractal_type);
+    string fractal_name = fractal_type_to_string(fsettings.fractal_type);
 
-    const string coloring_mode_name = coloring_mode_to_strign(csettings.cmode);
+    const string coloring_mode_name = coloring_mode_to_string(csettings.cmode);
 
     cout << "Rendering      : " << fractal_name << (fsettings.julia_mode ? " (J)" : "") << " (" << rsettings.max_threads << " thread(s))" << endl;
     cout << "Image size     : " << isettings.image_width << " x " << isettings.image_height << endl;

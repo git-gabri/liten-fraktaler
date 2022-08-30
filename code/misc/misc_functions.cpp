@@ -6,7 +6,7 @@
 using namespace std;
 
 //Conversion functions
-string ftype_to_string(const ftype& f){
+string fractal_type_to_string(const ftype& f){
     string ret_str;
 
     switch (f){
@@ -48,7 +48,33 @@ string ftype_to_string(const ftype& f){
     return ret_str;
 }
 
-string coloring_mode_to_strign(const coloring_mode& c){
+string renderer_type_to_string(const rtype& r){
+    string ret_str;
+
+    switch (r){
+        case rtype::basic:          ret_str = "basic";              break;
+        case rtype::mibc:           ret_str = "mibc";               break;
+
+        case rtype::test0:          ret_str = "--TEST 0--";         break;
+        case rtype::test1:          ret_str = "--TEST 1--";         break;
+        case rtype::test2:          ret_str = "--TEST 2--";         break;
+        case rtype::test3:          ret_str = "--TEST 3--";         break;
+        case rtype::test4:          ret_str = "--TEST 4--";         break;
+        case rtype::test5:          ret_str = "--TEST 5--";         break;
+        case rtype::test6:          ret_str = "--TEST 6--";         break;
+        case rtype::test7:          ret_str = "--TEST 7--";         break;
+        case rtype::test8:          ret_str = "--TEST 8--";         break;
+        case rtype::test9:          ret_str = "--TEST 9--";         break;
+
+        default:
+            ret_str = "Unknown/undocumented";
+            break;
+    }
+
+    return ret_str;
+}
+
+string coloring_mode_to_string(const coloring_mode& c){
     string ret_str;
 
     switch (c){
@@ -69,13 +95,17 @@ string coloring_mode_to_strign(const coloring_mode& c){
 
 //Function to print info about the current settings of the program
 void lf::internals::print_render_info(){
-    string fractal_name = ftype_to_string(fsettings.fractal_type);
+    const string fractal_name = fractal_type_to_string(fsettings.fractal_type);
 
-    const string coloring_mode_name = coloring_mode_to_strign(csettings.cmode);
+    const string renderer_name = renderer_type_to_string(rsettings.renderer_type);
+    const string coloring_mode_name = coloring_mode_to_string(csettings.cmode);
 
     cout << "Rendering      : " << fractal_name << (fsettings.julia_mode ? " (J)" : "") << " (" << rsettings.max_threads << " thread(s))" << endl;
     cout << "Image size     : " << isettings.image_width << " x " << isettings.image_height << endl;
     cout << "Sectors up to  : " << rsettings.max_sector_size << "x" << rsettings.max_sector_size << " = " << rsettings.max_sector_size * rsettings.max_sector_size << " pixels^2" << endl;
+    cout << "Renderer       : " << renderer_name << endl;
+    if(rsettings.renderer_type == rtype::mibc)
+    cout << "MIBC max. iter.: " << rsettings.mibc_max_iter_between_checks << endl;
 
     cout << "Iterations     : " << fsettings.max_iter << endl;
     cout << "Bailout radius : " << fsettings.bailout << endl;

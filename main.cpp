@@ -13,6 +13,8 @@ int main(int argc, char *argv[]) {
     if(lf::parse_options(vector<string>(argv + 1, argc + argv)))
         return EXIT_FAILURE;
 
+    const auto verbose = lf::internals::consettings.verbose_output;
+
     lf::load_palette();
 
     if(lf::internals::palette.size() == 0){cerr << "THIS SHOULDN'T HAVE HAPPENED" << endl; return 1;}
@@ -23,11 +25,13 @@ int main(int argc, char *argv[]) {
     png::image<png::rgb_pixel> fractalImage = lf::launch_render();
     s.toc();
 
-    cout << "                                        \r";
-    cout << "Rendering took " << s << " seconds" << endl;
-    cout << "Writing image..." << endl;
+    if(verbose){
+        cout << "Rendering took " << s << " seconds" << endl;
+        cout << "Writing image..." << endl;
+    }
     fractalImage.write(lf::internals::isettings.image_name + ".png");
-    cout << "Done!" << endl;
+    if(verbose)
+        cout << "Done!" << endl;
 
     return EXIT_SUCCESS;
 }
