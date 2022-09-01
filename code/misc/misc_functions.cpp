@@ -103,9 +103,10 @@ void lf::internals::print_render_info(){
     cout << "Rendering      : " << fractal_name << (fsettings.julia_mode ? " (J)" : "") << " (" << rsettings.max_threads << " thread(s))" << endl;
     cout << "Image size     : " << isettings.image_width << " x " << isettings.image_height << endl;
     cout << "Sectors up to  : " << rsettings.max_sector_size << "x" << rsettings.max_sector_size << " = " << rsettings.max_sector_size * rsettings.max_sector_size << " pixels^2" << endl;
-    cout << "Renderer       : " << renderer_name << endl;
+    cout << "Renderer       : " << renderer_name;
     if(rsettings.renderer_type == rtype::mibc)
-    cout << "MIBC max. iter.: " << rsettings.mibc_max_iter_between_checks << endl;
+        cout << " (" << rsettings.mibc_max_iter_between_checks << ")";
+    cout << endl;
 
     cout << "Iterations     : " << fsettings.max_iter << endl;
     cout << "Bailout radius : " << fsettings.bailout << endl;

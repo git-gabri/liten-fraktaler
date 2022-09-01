@@ -20,9 +20,8 @@ add_executable(liten-fraktaler main.cpp ${LF_SOURCES})
 target_include_directories(liten-fraktaler PRIVATE ${LF_INCLUDE_DIRS})
 target_link_libraries(liten-fraktaler png pthread)
 
-target_compile_definitions(liten-fraktaler PUBLIC VERSION="0.8.18.rewrite1")
+target_compile_definitions(liten-fraktaler PUBLIC VERSION="0.9.18")
 
-target_compile_definitions(liten-fraktaler PUBLIC FIRST_ITERATION_IS_0=true)
 target_compile_definitions(liten-fraktaler PUBLIC FALLBACK_NUM_THREADS=1)
 target_compile_definitions(liten-fraktaler PUBLIC DEFAULT_MIBC_MAX_ITER_POW2EXP=10)
 

@@ -41,17 +41,19 @@ void lf::internals::basic_block_renderer(const size_t startX, const size_t start
             init_fractal(x, y, width, height, square_scale, z, c, history, extra_params, fsettings);
 
             //Auxiliary variables to count the number of iterations and when to stop iterating
-            size_t iter_count = (FIRST_ITERATION_IS_0 ? -1 : 0);
+            size_t iter_count = 0;
             stop_iterating = false;
-            do {
+
+            //
+            while((iter_count < fsettings.max_iter) && !stop_iterating){
                 //compute new value for fractal
                 z = (*fractal_func)(z, c, history, extra_params, fsettings);
 
                 if(std::norm(z) > bailout_2)
                     stop_iterating = true;
-
-                ++iter_count;
-            } while((iter_count < fsettings.max_iter) && !stop_iterating);
+                else
+                    ++iter_count;
+            }
 
             image_to_write[y][x] = compute_color(iter_count, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }
@@ -97,7 +99,7 @@ void lf::internals::mibc_block_renderer(const size_t startX, const size_t startY
 
             stop_iterating = false;
 
-            do {
+            while((total_iter_count < fsettings.max_iter) && !stop_iterating){
                 //compute new value for fractal skipping checks
                 const std::complex<long double> prev_z = z;
                 for(iter_count = 0; iter_count < num_iter_between_checks && iter_count < (fsettings.max_iter - total_iter_count); ++iter_count)
@@ -118,7 +120,38 @@ void lf::internals::mibc_block_renderer(const size_t startX, const size_t startY
                         num_iter_between_checks /= 2;
                     }
                 }
-            } while(total_iter_count < fsettings.max_iter && (stop_iterating == false));
+            }
+
+            //Apparently, the following loop is not faster
+            //
+            //while((total_iter_count < fsettings.max_iter) && !stop_iterating){
+            //    //compute new value for fractal skipping checks
+            //    const std::complex<long double> prev_z = z;
+            //    for(iter_count = 0; iter_count < num_iter_between_checks && iter_count < (fsettings.max_iter - total_iter_count); ++iter_count)
+            //        z = (*fractal_func)(z, c, history, extra_params, fsettings);
+
+            //    //If we didn't overshoot we increment the value of total_iter_count by the amount of iterations performed
+            //    if(std::isfinite(z.real()) && std::isfinite(z.imag()) && std::norm(z) < bailout_2){
+            //        total_iter_count += iter_count;
+            //    }
+            //    //If we overshot and performed too many iterations between a check and another
+            //    else{
+            //        //If we overshot even once it means it's necessary to start decreasing the number of iterations between checks
+            //        //independently if we overshot or not
+            //        divide_num_it_between_checks = true;
+
+            //        //Restore previous status of z
+            //        z = prev_z;
+            //    }
+
+            //    //If we performed just an iteration, we're already at the limit, so we must exit the while loop
+            //    if(num_iter_between_checks == 1)
+            //        stop_iterating = true;
+
+            //    //If it's necessary, divide the number of iterations by 2
+            //    if(divide_num_it_between_checks)
+            //        num_iter_between_checks /= 2;
+            //}
 
             image_to_write[y][x] = compute_color(total_iter_count, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
         }

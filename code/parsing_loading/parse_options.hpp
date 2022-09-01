@@ -94,6 +94,7 @@ const std::map<std::string, cmdline_option> map_str_to_cmdlineopt{
     {"--max-threads",   cmdline_option::set_max_threads},
     {"--renderer",      cmdline_option::set_renderer},
     {"--mibc-max-iter", cmdline_option::set_mibc_max_iter},
+    {"--max-iter-mibc", cmdline_option::set_mibc_max_iter},
 
     {"-f",              cmdline_option::set_fractal},
     {"--fractal",       cmdline_option::set_fractal},
