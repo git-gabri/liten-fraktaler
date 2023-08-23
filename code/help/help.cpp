@@ -58,6 +58,7 @@ RENDERING RELATED FLAGS
                                            iteration is performed.
                                            Works well when the maximum number of iterations is high and the
                                            points in the image take a lot of time to diverge.
+                        Has no effect if the specified fractal type is "script".
 
     --mibc-max-iter SIZE_T
                         sets the number of iterations initially performed by the "mibc" renderer.
@@ -87,8 +88,15 @@ FRACTAL RELATED FLAGS
                         "seaangel"      -> Sea angel fractal
                         "smith"         -> Smith Chart fractal
                         "spade"         -> Spade fractal
+                        "script"        -> Fractal defined through a simple scripting language
                         "__testX"       -> X in [0; 9]. These are used for testing and development.
                         NOTE: not all the listed fractals will render well on default settings.
+    --fsf STRING
+    --fractal-script-filename STRING
+                        specifies the name of the file containing the script defining the custom
+                        fractal.
+                        More on the syntax of the scripting language in the dedicated section below.
+                        Has no effect if the fractal type is not "script", see option above.
     -r LNG_DBL
     --real LNG_DBL
                         sets real part of the offset from the origin.
@@ -158,6 +166,52 @@ COLOR RELATED FLAGS
     --crosshair         enables crosshair.
                         Draws a crosshair in the middle of the fractal image by inverting the colors
                         along the equator and the prime meridian.
+
+FRACTAL SCRIPTING LANGUAGE
+    This scripting language is interpreted in a small virtual register machine, with 16 registers (0 to 15)
+    and a dynamically sized vector of constants.
+    All of the constants and the registers are complex numbers of long doubles. Before writing code, it's
+    recommended to read all of the text below, especially the notes on the machine operation.
+
+    The machine can perform the following operations:
+        *) loading of a constant
+           Syntax: "c<dest_const> <- (<real>,<imag>)"
+           Regex: ^c\d+ <- \S+$
+           Example: "c3 <- (15,1)" loads in constant 3 the value 15+i
+        *) addition
+           Syntax: "<dest_reg> <- <src1_reg> + <src2_reg>"
+           Regex: ^\d{1,2} <- \d{1,2} \+ \d{1,2}$
+           Example: "0 <- 1 + 2" writes in register 0 the result of (register 1 + register 2)
+        *) subtraction
+           Syntax: "<dest_reg> <- <src1_reg> - <src2_reg>"
+           Regex: ^\d{1,2} <- \d{1,2} \- \d{1,2}$
+           Example: "1 <- 5 - 6" writes in register 1 the result of (register 5 - register 6)
+        *) multiplication
+           Syntax: "<dest_reg> <- <src1_reg> * <src2_reg>"
+           Regex: ^\d{1,2} <- \d{1,2} \* \d{1,2}$
+           Example: "2 <- 4 * 8" writes in register 1 the result of (register 4 * register 8)
+        *) division
+           Syntax: "<dest_reg> <- <src1_reg> / <src2_reg>"
+           Regex: ^\d{1,2} <- \d{1,2} \/ \d{1,2}$
+           Example: "3 <- 10 / 12" writes in register 3 the result of (register 10 / register 12)
+        *) copy of a constant to a register
+           Syntax: "<dest_reg> <- c<src_const>"
+           Regex: ^\d{1,2} <- c\d+$
+           Example: "9 <- c0" writes in register 9 the constant 0
+        *) copy of a register to a register
+           Syntax: "<dest_reg> <- <src_reg>"
+           Regex: ^\d{1,2} <- \d{1,2}+$
+           Example: "14 <- 15" copies the content of register 15 into register 14
+    
+    Important notes on the register machine operation:
+    - if in the code the constant cN is loaded with a value, all of the other constants from 0 to N-1
+      will be created if not already present;
+    - (almost) NO BOUNDARY CHECKING IS PRESENT, if you want to access register 16 or 42, you can, but
+      it's unallocated space, the program will probably crash.
+      Also, if in the code loads a constant cN but then accesses cM with M > N, it's again unallocated
+      space and again, the code will probably crash.
+    - when rendering a fractal, the value of z is loaded in register 0, the value of c is loaded in register 1.
+      The new value of z is taken as what's present in register 0 after the script terminates.
 )foo";
     return;
 }

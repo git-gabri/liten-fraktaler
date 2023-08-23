@@ -38,7 +38,7 @@ namespace lf{
 
         extern std::vector<png::rgb_pixel> palette;     //color palette
 
-        extern std::vector<std::complex<double>> custom_fractal_script_constants;
+        extern std::vector<std::complex<long double>> custom_fractal_script_constants;
         extern std::vector<mrm::instruction> custom_fractal_script;
 
         //---------------------------------------------------------------------------------------

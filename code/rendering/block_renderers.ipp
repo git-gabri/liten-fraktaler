@@ -151,7 +151,7 @@ inline void lf::internals::custom_script_block_renderer(const size_t startX, con
     std::vector<std::complex<long double>> extra_params;
 
     //Register machine to execute the script
-    mrm::machine<std::complex<double>> reg_machine;
+    mrm::machine<std::complex<long double>> reg_machine;
     reg_machine.load_script(custom_fractal_script);
 
     //Calculate the values of the pixels for each point in the assigned sector of the image
