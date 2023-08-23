@@ -1,7 +1,6 @@
 #include "liten.hpp"
 #include "threadpool.hpp"
 #include "misc_functions.hpp"
-#include "coloring.hpp"
 #include "fractals.hpp"
 
 #include <complex>
@@ -15,14 +14,14 @@ using namespace lf::internals;
 #define vcout if(consettings.verbose_output) cout        //print only if verbose output enabled (verbose-cout)
 
 //Function that makes multiple threads to render the image
-png::image<png::rgb_pixel> lf::launch_render(){
+int lf::launch_render(png::image<png::rgb_pixel>& fractal_image){
     //To better distribute the workload between all the threads, the image gets divided into sectors, then
     //when one thread working on a sector finishes, we launch another one to work on another sector, so that we
     //(almost) always have all the threads working on a sector
     vector<array<size_t, 4>> sectors = {};
     //Image of the fractal
     vcout << "Allocating image in RAM... " << flush;
-    png::image<png::rgb_pixel> fractal_image(isettings.image_width, isettings.image_height);
+    fractal_image = png::image<png::rgb_pixel>(isettings.image_width, isettings.image_height);
     vcout << "Done!" << endl;
 
     //Creating sectors onto which thread can work in parallel
@@ -54,6 +53,23 @@ png::image<png::rgb_pixel> lf::launch_render(){
     cout << "Total area: " << totalAreaSectors << "    Image area: " << image_width*image_height << endl;
     return 0;
     */
+
+    //If the generated fractal is from a custom script, load the constants and the script file to memory
+    if(fsettings.fractal_type == ftype::custom_script){
+        const auto script_load_status = load_custom_fractal_script(fsettings.fractal_script_filename);
+
+        switch(script_load_status){
+            default:
+            case 0:                                                                             break;
+            case -1:    cerr << "[ERROR]: script file hasn't been specified/found" << endl;     break;
+            case 1:     cerr << "[ERROR]: invalid syntax in script" << endl;                    break;
+            case 2:     cerr << "[ERROR]: index out of bounds in script" << endl;               break;
+        }
+
+        if(script_load_status != 0) return script_load_status;
+
+        rsettings.renderer_type = rtype::custom_script;
+    }
 
     //Function pointer to the fractal function to call
     block_renderer_fn_ptr_t block_renderer_pointer = get_block_renderer_ptr();
@@ -119,7 +135,7 @@ png::image<png::rgb_pixel> lf::launch_render(){
         }
     }
 
-    return fractal_image;
+    return 0;
 }
 
 block_renderer_fn_ptr_t lf::internals::get_block_renderer_ptr(){
@@ -180,6 +196,7 @@ block_renderer_fn_ptr_t lf::internals::gbr_select_renderer(){
         default:
         case rtype::basic:          ret_ptr = &basic_block_renderer<fractal_func>;                          break;
         case rtype::mibc:           ret_ptr = &mibc_block_renderer<fractal_func>;                           break;
+        case rtype::custom_script:  ret_ptr = &custom_script_block_renderer;                                break;
 
         case rtype::test0:          ret_ptr = &block_renderer_test0<fractal_func>;                          break;
         case rtype::test1:          ret_ptr = &block_renderer_test1<fractal_func>;                          break;
@@ -216,6 +233,8 @@ long double lf::internals::default_bailout_radius(const ftype& f){
         {ftype::seaangel,      64},
         {ftype::smith,         64},
         {ftype::spade,        128},
+
+        {ftype::custom_script,  2},
         
         {ftype::test0,   128},
         {ftype::test1,   128},

@@ -3,7 +3,6 @@
 
 #include "liten.hpp"
 #include "fractals.hpp"
-#include "coloring.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -55,7 +54,7 @@ void lf::internals::basic_block_renderer(const size_t startX, const size_t start
                     ++iter_count;
             }
 
-            image_to_write[y][x] = compute_color(iter_count, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+            image_to_write[y][x] = compute_color(z, c, history, iter_count, bailout);
         }
     }
 
@@ -122,7 +121,64 @@ void lf::internals::mibc_block_renderer(const size_t startX, const size_t startY
                 }
             }
 
-            image_to_write[y][x] = compute_color(total_iter_count, fsettings.max_iter, z.real(), z.imag(), fsettings.bailout, csettings.cmode, palette);
+            image_to_write[y][x] = compute_color(z, c, history, iter_count, bailout);
+        }
+    }
+
+    return;
+}
+
+//Custom script version:
+//uses a small register machine to compute each iteration of the fractal.
+//z is placed in register 0
+//c is placed in register 1
+inline void lf::internals::custom_script_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write){
+    const auto width = image_to_write.get_width();
+    const auto height = image_to_write.get_height();
+    //In order not to have an image which is stretched either along the x or the y axis,
+    //we introduce an auxiliary variable which will be useful for scaling, which represents
+    //the side of a square whose length is the minimum of the width and the height
+    const auto square_scale = std::min(width, height);
+
+    //Square of the bailout radius to chech the norm against it in the main iteration loop
+    const long double bailout = fsettings.bailout;
+    const long double bailout_2 = bailout * bailout;
+
+    std::complex<long double> z;
+    std::complex<long double> c;
+    bool stop_iterating = false;
+    std::vector<std::complex<long double>> history;
+    std::vector<std::complex<long double>> extra_params;
+
+    //Register machine to execute the script
+    mrm::machine<std::complex<double>> reg_machine;
+    reg_machine.load_script(custom_fractal_script);
+
+    //Calculate the values of the pixels for each point in the assigned sector of the image
+    for(size_t y = startY; y < endY; y++) {
+        for(size_t x = startX; x < endX; x++) {
+            //Initialize fractal parameters z, c, etc...
+            init_fractal(x, y, width, height, square_scale, z, c, history, extra_params, fsettings);
+
+            //Auxiliary variables to count the number of iterations and when to stop iterating
+            size_t iter_count = 0;
+            stop_iterating = false;
+
+            //
+            while((iter_count < fsettings.max_iter) && !stop_iterating){
+                //compute new value for fractal
+                reg_machine.registers[0] = z;
+                reg_machine.registers[1] = c;
+                reg_machine.execute_script(custom_fractal_script_constants);
+                z = reg_machine.registers[0];
+
+                if(std::norm(z) > bailout_2)
+                    stop_iterating = true;
+                else
+                    ++iter_count;
+            }
+
+            image_to_write[y][x] = compute_color(z, c, history, iter_count, bailout);
         }
     }
 

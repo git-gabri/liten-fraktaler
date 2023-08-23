@@ -34,6 +34,7 @@ enum class cmdline_option{
     set_mibc_max_iter,
 
     set_fractal,
+    set_fractal_script_filename,
     set_real_offset, set_imag_offset,
     set_scaling_factor,
     set_bailout_radius,
@@ -60,6 +61,7 @@ const std::map<cmdline_option, size_t> map_cmdlineopt_num_elem_to_pop{
     {cmdline_option::set_mibc_max_iter, 2},
 
     {cmdline_option::set_fractal, 2},
+    {cmdline_option::set_fractal_script_filename, 2},
     {cmdline_option::set_real_offset, 2},
     {cmdline_option::set_imag_offset, 2},
     {cmdline_option::set_scaling_factor, 2},
@@ -98,6 +100,8 @@ const std::map<std::string, cmdline_option> map_str_to_cmdlineopt{
 
     {"-f",              cmdline_option::set_fractal},
     {"--fractal",       cmdline_option::set_fractal},
+    {"--fsf",           cmdline_option::set_fractal_script_filename},
+    {"--fractal-script-filename", cmdline_option::set_fractal_script_filename},
     {"-r",              cmdline_option::set_real_offset},
     {"--real",          cmdline_option::set_real_offset},
     {"-i",              cmdline_option::set_imag_offset},
@@ -143,6 +147,8 @@ const std::map<std::string, ftype> map_string_to_ftype{
     {"seaangel",    ftype::seaangel},
     {"smith",       ftype::smith},
     {"spade",       ftype::spade},
+
+    {"script",      ftype::custom_script},
 
     {"__test0", ftype::test0},
     {"__test1", ftype::test1},

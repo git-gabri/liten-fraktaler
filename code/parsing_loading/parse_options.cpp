@@ -238,6 +238,16 @@ int lf::parse_options(std::vector<std::string> options){
             }   break;
 
             //---------------------------------------------------------------------
+            case cmdline_option::set_fractal_script_filename:
+                if(options.size() < 2){
+                    print_error("unspecified/specified custom fractal script is invalid");
+                    return 2;
+                }
+                else
+                    fsettings.fractal_script_filename = *(options.begin() + 1);
+                break;
+
+            //---------------------------------------------------------------------
             case cmdline_option::set_real_offset:
             {   long double tmp_real;
                 if(string_to_ld(options, options.begin() + 1, tmp_real)){

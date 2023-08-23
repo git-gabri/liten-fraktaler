@@ -8,6 +8,8 @@ colorsettings_t             lf::internals::csettings{};                 //struct
 rendersettings_t            lf::internals::rsettings{};                 //struct containing various information on how to render the image
 consolesettings_t           lf::internals::consettings{};               //struct containing various information on what the program should output on the console
 std::vector<png::rgb_pixel> lf::internals::palette = {};                //color palette
+std::vector<std::complex<double>>   lf::internals::custom_fractal_script_constants{};
+std::vector<mrm::instruction>       lf::internals::custom_fractal_script;
 
 //Implementing methods of the namespace "lf"
 using namespace lf::internals;

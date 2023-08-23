@@ -1,13 +1,9 @@
 TODOs
 
 Priority 0, high
-    - rewrite help
-          fractals can't be accessed by using ints, only string aliases
-          coloring modes can't be accessed using ints, only string aliases
+        
 
 Priority 1, medium
-    - make the entire liten fraktaler a namespace, with private variables, to be used kind of as a singleton, so you stop passing
-      around tons of variables.
     - FIX SMOOTH COLORING
     - solid guessing
       solid guessing size
@@ -50,6 +46,14 @@ Priority UNICORN, things that I wish already were in the program
 
 Other random stuff and snippets of code that were around and then were not included in the final code.
 They all represent features that I wanted to add but didn't have the time to do so
+
+todos for the coloring
+* FIX LN
+* N  -> bailout / norm of last iter
+* N  -> imaginary part of the last iterated point (normalized to idk what)
+* N  -> real + imag (normalized to idk what)
+* N  -> real * imag (normalized to idk what)
+* N  -> ln(ln()) but make it option number 2 and shift all the others
 
 const regex re_raw_output(R"foo(^--raw-output$)foo");
 const regex re_hybrid_fractal(R"foo(^--hybrid-fractal$)foo");

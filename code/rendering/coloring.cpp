@@ -1,23 +1,25 @@
-#include <fstream>
-#include <sstream>
+#include "liten.hpp"
+
 #include <cmath>
 #include <algorithm>
-
-#include "coloring.hpp"
 
 #define CONST_PI 3.141592653589793238l
 
 using namespace std;
 
-png::rgb_pixel compute_color(
-    const int& iter, const int& max_iter, const long double& last_re, const long double& last_im,
-    const long double& bailout, const coloring_mode& cmode, const vector<png::rgb_pixel>& palette){
+png::rgb_pixel lf::internals::compute_color(
+    [[maybe_unused]] const complex<long double>& z,
+    [[maybe_unused]] const complex<long double>& c,
+    [[maybe_unused]] const vector<complex<long double>>& history,
+    [[maybe_unused]] const size_t& iter,
+    [[maybe_unused]] const long double& bailout){
 
-    if(iter > max_iter || iter < 0 || max_iter < 0) return png::rgb_pixel(0, 0, 0);
+    if(iter > fsettings.max_iter)
+        return png::rgb_pixel(0, 0, 0);
 
     //Variables utilized for all the different coloring techniques
     //Normalized iteration
-    const long double normalized_iter = (long double)iter/(long double)max_iter;
+    const long double normalized_iter = (long double)iter/(long double)fsettings.max_iter;
     /*These three indices are used to indicate the two closest (by index) colors in the palette to the calculated correct (probably fractional) index
     * - calculated_index represents what the calculated color should be in the palette. It's usually computed by mapping something which ranges from
     *   [0,1] to [0, palette.size()-1]. Since this variable will probably never be an integer, we need the two other indices
@@ -34,7 +36,7 @@ png::rgb_pixel compute_color(
     png::rgb_pixel ret_color(0, 0, 0);
 
     //Switching color modes
-    switch(cmode){
+    switch(csettings.cmode){
         case coloring_mode::linear:         //LINEAR
             calculated_index = (normalized_iter) * (palette.size() - 1);
             color_index = floor(calculated_index);
@@ -44,12 +46,12 @@ png::rgb_pixel compute_color(
 
         case coloring_mode::ln:             //SMOOTH / LOG
         {
-            if(iter == max_iter) return png::rgb_pixel(0, 0, 0);
-            const long double smooth_iter = (long double)iter - log(log(last_re * last_re + last_im * last_im)/(2.0l * log(bailout))) / log(2.0l);
+            if(iter == fsettings.max_iter) return png::rgb_pixel(0, 0, 0);
+            const long double smooth_iter = (long double)iter - log(log(norm(z))/(2.0l * log(bailout))) / log(2.0l);
             if(smooth_iter < 0.0l) return palette.front();
             calculated_index = fmod(smooth_iter, palette.size());
             color_index = floor(calculated_index);
-            round_error = calculated_index - color_index;
+            round_error = calculated_index - (long double)color_index;
             interpolation_index = (size_t)ceil(calculated_index) % palette.size();
         }
             break;
@@ -76,7 +78,7 @@ png::rgb_pixel compute_color(
             break;
 
         case coloring_mode::lastangle:      //ANGLE
-            calculated_index = atan2(last_im, last_re);     //Return range [-pi, +pi]
+            calculated_index = atan2(z.imag(), z.real());     //Return range [-pi, +pi]
             calculated_index = calculated_index/(2.0l * CONST_PI) + 0.5l;
             color_index = floor(calculated_index);
             round_error = calculated_index - color_index;
@@ -85,10 +87,10 @@ png::rgb_pixel compute_color(
 
         case coloring_mode::binary:         //BINARY / DEFAULT
         default:
-            if(iter == max_iter)
-                return png::rgb_pixel(255, 255, 255);
+            if(iter == fsettings.max_iter)
+                return palette.back();
             else
-                return png::rgb_pixel(0, 0, 0);
+                return palette.front();
             break;
     }
 
@@ -105,6 +107,6 @@ png::rgb_pixel compute_color(
     return ret_color;
 }
 
-png::rgb_pixel invert_color(const png::rgb_pixel& c){
+png::rgb_pixel lf::internals::invert_color(const png::rgb_pixel& c){
     return png::rgb_pixel(255 - c.red, 255 - c.green, 255 - c.blue);
 }

@@ -29,6 +29,8 @@ string fractal_type_to_string(const ftype& f){
         case ftype::smith:          ret_str = "Smith";              break;
         case ftype::spade:          ret_str = "Spade fractal";      break;
 
+        case ftype::custom_script:  ret_str = "Custom from script"; break;
+
         case ftype::test0:          ret_str = "--TEST 0--";         break;
         case ftype::test1:          ret_str = "--TEST 1--";         break;
         case ftype::test2:          ret_str = "--TEST 2--";         break;
@@ -54,6 +56,7 @@ string renderer_type_to_string(const rtype& r){
     switch (r){
         case rtype::basic:          ret_str = "basic";              break;
         case rtype::mibc:           ret_str = "mibc";               break;
+        case rtype::custom_script:  ret_str = "script";             break;
 
         case rtype::test0:          ret_str = "--TEST 0--";         break;
         case rtype::test1:          ret_str = "--TEST 1--";         break;

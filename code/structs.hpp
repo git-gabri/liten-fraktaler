@@ -9,13 +9,14 @@
 enum class ftype{
     mandelbrot, tippets, burnship, mandelbar, magnet1, magnet2, cactus, cactus0, zubieta, zubitheta,
     logmap, unpolsquare, moth, cave, wankel, seaangel, smith, spade,
+    custom_script,
     test0, test1, test2, test3, test4, test5, test6, test7, test8, test9,
     unknown
 };
 
 //Renderer type enum
 enum class rtype{
-    basic, mibc,
+    basic, mibc, custom_script,
     test0, test1, test2, test3, test4, test5, test6, test7, test8, test9,
     unknown
 };
@@ -29,6 +30,8 @@ enum class coloring_mode{
 //Struct containing all the settings for the fractal
 struct fractalsettings_t {
     ftype fractal_type;
+
+    std::string fractal_script_filename;
 
     long double offset_re;
     long double offset_im;
@@ -47,6 +50,7 @@ struct fractalsettings_t {
 
     fractalsettings_t(
         ftype _fractal_type = ftype::mandelbrot,
+        std::string _fractal_script_filename = "",
         long double _offset_re = 0, long double _offset_im = 0,
         bool _juliaMode = false, bool _nebula_mode = false,
         long double _julia_re  = 0, long double _julia_im  = 0,
@@ -55,6 +59,7 @@ struct fractalsettings_t {
         int _max_iter = 2000
     ) :
     fractal_type(_fractal_type),
+    fractal_script_filename(_fractal_script_filename),
     offset_re(_offset_re), offset_im(_offset_im),
     julia_mode(_juliaMode), nebula_mode(_nebula_mode),
     julia_re(_julia_re), julia_im(_julia_im),

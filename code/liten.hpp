@@ -3,6 +3,7 @@
 
 #include "structs.hpp"
 #include "render_defs.hpp"
+#include "mrm.hpp"
 
 #include <iostream>
 #include <vector>
@@ -23,9 +24,9 @@ namespace lf{
     int load_palette();
 
     //Render the image
-    png::image<png::rgb_pixel> launch_render();
+    int launch_render(png::image<png::rgb_pixel>& fractal_image);
 
-    //Anonymous namespace containing internal functions and data
+    //Namespace containing internal functions and data
     namespace internals{
         //---------------------------------------------------------------------------------------
         //Private members
@@ -37,11 +38,17 @@ namespace lf{
 
         extern std::vector<png::rgb_pixel> palette;     //color palette
 
+        extern std::vector<std::complex<double>> custom_fractal_script_constants;
+        extern std::vector<mrm::instruction> custom_fractal_script;
+
         //---------------------------------------------------------------------------------------
         //Private methods
 
         //Print various information about the current render
         void print_render_info();
+
+        //Load a custom fractal script to pass to the register machine
+        int load_custom_fractal_script(const std::string& script_filename);
 
         //Get function pointer to block renderer
         //Switch wrt the type of block renderer used
@@ -57,6 +64,8 @@ namespace lf{
         void basic_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
         template<fractal_fn_ptr_t fractal_func>
         void mibc_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
+        //No template for this one
+        inline void custom_script_block_renderer(const size_t startX, const size_t startY, const size_t endX, const size_t endY, png::image<png::rgb_pixel>& image_to_write);
 
         //Block renderers for the different test fractals. Each of them has its own
         template<fractal_fn_ptr_t fractal_func>
@@ -82,6 +91,17 @@ namespace lf{
 
         //Get default bailout radius for different fractals
         long double default_bailout_radius(const ftype& f);
+
+        //Compute color of pixel based on last iteration data
+        png::rgb_pixel compute_color(
+            const std::complex<long double>& z,
+            const std::complex<long double>& c,
+            const std::vector<std::complex<long double>>& history,
+            const size_t& iter,
+            const long double& bailout);
+
+        //Function to invert a single color
+        png::rgb_pixel invert_color(const png::rgb_pixel& c);
     }
 }
 
