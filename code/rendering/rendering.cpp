@@ -69,6 +69,7 @@ int lf::launch_render(png::image<png::rgb_pixel>& fractal_image){
         if(script_load_status != 0) return script_load_status;
 
         rsettings.renderer_type = rtype::custom_script;
+        vcout << "Script loaded!" << endl;
     }
 
     //Function pointer to the fractal function to call

@@ -168,50 +168,130 @@ COLOR RELATED FLAGS
                         along the equator and the prime meridian.
 
 FRACTAL SCRIPTING LANGUAGE
-    This scripting language is interpreted in a small virtual register machine, with 16 registers (0 to 15)
-    and a dynamically sized vector of constants.
-    All of the constants and the registers are complex numbers of long doubles. Before writing code, it's
-    recommended to read all of the text below, especially the notes on the machine operation.
+    This scripting language is used to specify the mathematical operations to perform in a single iteration of the fractal.
+    It's interpreted in a small virtual register machine (RM), with 16 registers (0 to 15) and a read-only vector of constants.
+    All of the constants and the registers are complex numbers of long doubles.
 
-    The machine can perform the following operations:
-        *) loading of a constant
-           Syntax: "c<dest_const> <- (<real>,<imag>)"
-           Regex: ^c\d+ <- \S+$
-           Example: "c3 <- (15,1)" loads in constant 3 the value 15+i
-        *) addition
-           Syntax: "<dest_reg> <- <src1_reg> + <src2_reg>"
-           Regex: ^\d{1,2} <- \d{1,2} \+ \d{1,2}$
-           Example: "0 <- 1 + 2" writes in register 0 the result of (register 1 + register 2)
-        *) subtraction
-           Syntax: "<dest_reg> <- <src1_reg> - <src2_reg>"
-           Regex: ^\d{1,2} <- \d{1,2} \- \d{1,2}$
-           Example: "1 <- 5 - 6" writes in register 1 the result of (register 5 - register 6)
-        *) multiplication
-           Syntax: "<dest_reg> <- <src1_reg> * <src2_reg>"
-           Regex: ^\d{1,2} <- \d{1,2} \* \d{1,2}$
-           Example: "2 <- 4 * 8" writes in register 1 the result of (register 4 * register 8)
-        *) division
-           Syntax: "<dest_reg> <- <src1_reg> / <src2_reg>"
-           Regex: ^\d{1,2} <- \d{1,2} \/ \d{1,2}$
-           Example: "3 <- 10 / 12" writes in register 3 the result of (register 10 / register 12)
-        *) copy of a constant to a register
-           Syntax: "<dest_reg> <- c<src_const>"
-           Regex: ^\d{1,2} <- c\d+$
-           Example: "9 <- c0" writes in register 9 the constant 0
-        *) copy of a register to a register
-           Syntax: "<dest_reg> <- <src_reg>"
-           Regex: ^\d{1,2} <- \d{1,2}+$
-           Example: "14 <- 15" copies the content of register 15 into register 14
+    A script contains one "instruction" per line and each line can be of 2 types:
+    - constant initialization
+    - instruction for the RM
+    When loading the script, the constants are stored in a dedicated vector and the instructions in another one.
+    When executing the script, only the instruction vector is iterated until the end of execution.
+
+    NOTE:
+    Before writing code, it's HIGHLY RECOMMENDED to READ all of the text below, especially the notes on the
+    machine operation.
+
+SCRIPTING SYNTAX
+    CONSTANT INITIALIZATION
+    The syntax of a line for loading a constant is the following:
+
+    c<dest_const> = (<real>,<imag>)
+
+    and it has to match the following regex: ^c\d+ = \S+$
+    Example: "c3 = (15,1)" loads in constant 3 the value 15+i
+    If in the code the constant cN is loaded with a value, all of the other constants from 0 to N-1
+    will be created and default-initialized if not already present.
+    If a constant is initialized more than once, only the last line initializing it will have effect.
+    Constants are READ-ONLY during the script execution, the machine has no instructions to write to them.
+
+    RM INSTRUCTIONS
+    The machine can perform a certain set of operations, some are binary, in the sense that they
+    take 2 arguments, and some are unary. All of them always output one result.
+    The syntax of all the instructions is the following:
     
-    Important notes on the register machine operation:
-    - if in the code the constant cN is loaded with a value, all of the other constants from 0 to N-1
-      will be created if not already present;
+    Unary:      "<dest_reg> = <op> <src_reg>"
+    Binary:     "<dest_reg> = <src1_reg> <op> <src2_reg>"
+
+    Below is a complete list of all the operations that the RM can perform:
+        *) addition         ^\d{1,2} = \d{1,2} \+ \d{1,2}$
+        *) subtraction      ^\d{1,2} = \d{1,2} \- \d{1,2}$
+        *) multiplication   ^\d{1,2} = \d{1,2} \* \d{1,2}$
+        *) division         ^\d{1,2} = \d{1,2} \/ \d{1,2}$
+            Basic arithmetic operations.
+            Examples: "0 = 1 + 2"   writes in reg. 0 the result of (reg. 1 + reg. 2)
+                      "3 = 4 - 5"   writes in reg. 3 the result of (reg. 4 - reg. 5)
+                      "6 = 7 * 8"   writes in reg. 6 the result of (reg. 7 * reg. 8)
+                      "9 = 10 / 11" writes in reg. 9 the result of (reg. 10 / reg. 11)
+        *) swap             ^\d{1,2} = swap \d{1,2}$
+            Swaps the real and imaginary part of the specified number.
+            Example:  "0 = swap 3" copies reg. 3 in reg. 0 swapping the real and imaginary parts.
+        *)inverse           ^\d{1,2} = inv \d{1,2}$
+        *)inverse real      ^\d{1,2} = invre \d{1,2}$
+        *)inverse imag      ^\d{1,2} = invim \d{1,2}$
+            Inverse of the number (1/x) or of the real/imaginary part only.
+            Examples: "0 = inv 1"   writes in reg. 0 the result of 1/(reg. 1)
+                      "2 = invre 3" copies reg. 3 in reg. 2 but with the real part inverted (1/real)
+                      "4 = invim 5" copies reg. 5 in reg. 4 but with the imaginary part inverted (1/imag)
+        *)flip sign         ^\d{1,2} = flip \d{1,2}$
+        *)flip sign real    ^\d{1,2} = flipre \d{1,2}$
+        *)flip sing imag    ^\d{1,2} = flipim \d{1,2}$
+            Flips the sign of the number or of the real/imaginary part only.
+            Examples: "0 = flip 1"   writes in reg. 0 the result of -1*(reg. 1)
+                      "2 = flipre 3" copies reg. 3 in reg. 2 but with the real part multiplied by -1
+                      "4 = flipim 5" copies reg. 5 in reg. 4 but with the imaginary part multiplied by -1
+        *)abs. value        ^\d{1,2} = abs \d{1,2}$
+        *)abs. value real   ^\d{1,2} = absre \d{1,2}$
+        *)abs. value imag   ^\d{1,2} = absim \d{1,2}$
+            Takes the absolute value of the number or of the real/imaginary part only.
+            Examples: "0 = abs 1"   writes in reg. 0 the result of |reg. 1|
+                          Note: this operation is very different from the other 2
+                      "2 = absre 3" copies reg. 3 in reg. 2 but with the absolute value of the real part
+                      "4 = absim 5" copies reg. 5 in reg. 4 but with the absolute value of the imaginary part
+        *)nullify real      ^\d{1,2} = nullre \d{1,2}$
+        *)nullify imag      ^\d{1,2} = nullim \d{1,2}$
+            Nullifies the real/imaginary part of a number.
+            Examples: "0 = nullre 1" copies the imaginary part of reg. 1 in reg. 0 and sets the real part to 0
+                      "2 = nullim 3" copies the real part of reg. 3 in reg. 2 and sets the imaginary part to 0
+        *)sine              ^\d{1,2} = sin \d{1,2}$
+        *)cosine            ^\d{1,2} = cos \d{1,2}$
+        *)tangent           ^\d{1,2} = tan \d{1,2}$
+            Trigonometric functions.
+            Examples: "0 = sin 1" writes in reg. 0 the result of sin(reg. 1)
+                      "2 = cos 3" writes in reg. 2 the result of cos(reg. 3)
+                      "4 = tan 5" writes in reg. 4 the result of tan(reg. 5)
+        *)hyper. sine       ^\d{1,2} = sinh \d{1,2}$
+        *)hyper. cosine     ^\d{1,2} = cosh \d{1,2}$
+        *)hyper. tangent    ^\d{1,2} = tanh \d{1,2}$
+            Hyperbolic functions.
+            Examples: "0 = sinh 1" writes in reg. 0 the result of sinh(reg. 1)
+                      "2 = cosh 3" writes in reg. 2 the result of cosh(reg. 3)
+                      "4 = tanh 5" writes in reg. 4 the result of tanh(reg. 5)
+        *)generic power     ^\d{1,2} = \d{1,2} pow \d{1,2}$
+        *)square            ^\d{1,2} = pow2 \d{1,2}$
+        *)cube              ^\d{1,2} = pow3 \d{1,2}$
+            Power functions.
+            Examples: "0 = 1 pow 2" writes in reg. 0 the result of (reg. 1)^(reg. 2)
+                      "3 = pow2 4" writes in reg. 3 the result of (reg. 4)*(reg. 4)
+                      "5 = pow3 6" writes in reg. 5 the result of (reg. 6)*(reg. 6)*(reg. 6)
+        *)natural log       ^\d{1,2} = log \d{1,2}$
+        *)base 2 log        ^\d{1,2} = log2 \d{1,2}$
+            Logarithm functions.
+            Examples: "0 = log 1" writes in reg. 0 the result of log_e(reg. 1)
+                      "2 = log2 3" writes in reg. 2 the result of log_2(reg. 3)
+        *)copy constant to register                 ^\d{1,2} = c\d+$
+        *)copy constant real to register            ^\d{1,2} = c\d+re$
+        *)copy constant imag to register            ^\d{1,2} = c\d+im$
+            Copying constants to registers.
+            Examples: "0 = c0" copies the constant 0 in reg. 0
+                      "1 = c1re" copies the real part of constant 1 in reg. 1
+                      "2 = c2im" copies the imaginary part of constant 2 in reg. 2
+        *)copying register to register              ^\d{1,2} = \d{1,2}$
+        *)copying register real to register         ^\d{1,2} = \d{1,2}re$
+        *)copying register imag to register         ^\d{1,2} = \d{1,2}im$
+            Examples: "0 = 1" copies reg. 1 into reg. 0
+                      "2 = 3re" copies the real part of reg. 3 into reg. 2
+                      "4 = 5im" copies the imaginary part of reg. 5 into reg. 4
+                          Note: the last 2 operation leave the other part of the complex number as is.
+    
+IMPORTANT NOTES ON RM OPERATION
     - (almost) NO BOUNDARY CHECKING IS PRESENT, if you want to access register 16 or 42, you can, but
       it's unallocated space, the program will probably crash.
       Also, if in the code loads a constant cN but then accesses cM with M > N, it's again unallocated
       space and again, the code will probably crash.
     - when rendering a fractal, the value of z is loaded in register 0, the value of c is loaded in register 1.
-      The new value of z is taken as what's present in register 0 after the script terminates.
+      The script is then executed and the new value of z is taken as what's present in register 0 at the end.
+    - registers are not reset between one iteration and another one, even of different pixels.
 )foo";
     return;
 }

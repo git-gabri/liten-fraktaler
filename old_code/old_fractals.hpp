@@ -615,8 +615,8 @@ void zubieta(
     c = cre + i*cim
     cz = czre + i*czim                (stores the result of c/z)
 
-    zre_2 = zre*zre   <-- updated at the end of the loop of the previous iteration
-    zim_2 = zim*zim   <-- updated at the end of the loop of the previous iteration
+    zre_2 = zre*zre   =- updated at the end of the loop of the previous iteration
+    zim_2 = zim*zim   =- updated at the end of the loop of the previous iteration
 
     z^2 = zre^2 - zim^2 + i*2*zre*zim
 
@@ -707,8 +707,8 @@ void zubitheta(
     c = cre + i*cim
     zc = zcre + i*zcim                (stores the result of z/c)
 
-    zre_2 = zre*zre   <-- updated at the end of the loop of the previous iteration
-    zim_2 = zim*zim   <-- updated at the end of the loop of the previous iteration
+    zre_2 = zre*zre   =- updated at the end of the loop of the previous iteration
+    zim_2 = zim*zim   =- updated at the end of the loop of the previous iteration
 
     z^2 = zre^2 - zim^2 + i*2*zre*zim
 
